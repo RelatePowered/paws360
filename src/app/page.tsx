@@ -6,15 +6,14 @@ import {
   Heart,
   DollarSign,
   Clock,
-  ArrowLeftRight,
   AlertTriangle,
   TrendingUp,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { mockDashboardStats, mockPeople, mockAnimals, mockDonations, mockAdopters } from '@/lib/mock-data';
-import { formatCurrency, formatDate, getRoleBadgeColor, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
+import { mockDashboardStats, mockAnimals, mockDonations, mockAdopters } from '@/lib/mock-data';
+import { formatCurrency, formatDate, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -59,43 +58,6 @@ export default function DashboardPage() {
           iconColor="bg-info/10 text-info"
         />
       </div>
-
-      {/* Role Transitions Banner */}
-      {stats.recentRoleTransitions.length > 0 && (
-        <Card>
-          <CardHeader className="bg-primary/5 dark:bg-primary/10">
-            <div className="flex items-center gap-2">
-              <ArrowLeftRight className="w-5 h-5 text-primary" />
-              <h2 className="font-semibold">Recent Role Transitions</h2>
-              <Badge className="bg-primary/20 text-primary ml-2">{stats.recentRoleTransitions.length}</Badge>
-            </div>
-          </CardHeader>
-          <CardBody className="divide-y divide-border">
-            {stats.recentRoleTransitions.map(transition => {
-              const person = mockPeople.find(p => p.id === transition.personId);
-              return (
-                <div key={transition.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary text-sm font-medium">
-                      {person?.firstName?.[0]}{person?.lastName?.[0]}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{person?.firstName} {person?.lastName}</p>
-                      <p className="text-xs text-muted">{transition.note}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Badge className={getRoleBadgeColor(transition.fromRole)}>{transition.fromRole}</Badge>
-                    <ArrowLeftRight className="w-3 h-3 text-muted" />
-                    <Badge className={getRoleBadgeColor(transition.toRole)}>{transition.toRole}</Badge>
-                    <span className="text-xs text-muted ml-2 hidden sm:inline">{formatDate(transition.date)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </CardBody>
-        </Card>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Flagged Adopters */}

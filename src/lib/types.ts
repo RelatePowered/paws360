@@ -1,14 +1,15 @@
 // ========== Core Types ==========
 
-export type PersonRole = 'donor' | 'volunteer' | 'both';
+export type PersonRole = 'donor' | 'volunteer' | 'adopter' | 'donor-volunteer' | 'donor-adopter' | 'volunteer-adopter' | 'all';
 
-export interface RoleTransition {
+// Moves Management: tracks how a person's relationship with the shelter evolves
+export interface Move {
   id: string;
   personId: string;
-  fromRole: PersonRole;
-  toRole: PersonRole;
+  fromRoles: string[];
+  toRoles: string[];
   date: string;
-  note?: string;
+  trigger?: string; // what caused the move (e.g., "First donation", "Adopted Whiskers", "Signed up for weekend shift")
 }
 
 export interface Person {
@@ -21,8 +22,8 @@ export interface Person {
   city?: string;
   state?: string;
   zip?: string;
-  role: PersonRole;
-  roleHistory: RoleTransition[];
+  roles: string[]; // current active roles: 'donor', 'volunteer', 'adopter'
+  moves: Move[];
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -162,6 +163,5 @@ export interface DashboardStats {
   adoptionsThisMonth: number;
   donationsThisMonth: number;
   volunteerHoursThisMonth: number;
-  recentRoleTransitions: RoleTransition[];
   flaggedAdopters: number;
 }

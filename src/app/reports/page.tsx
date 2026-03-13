@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormField, Select, Input } from '@/components/ui/FormField';
 import { mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/lib/mock-data';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 
 type ReportType = 'donations' | 'volunteers' | 'animals' | 'adoptions' | 'people';
 
@@ -222,47 +222,63 @@ export default function ReportsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">People & Role Transitions</h3>
+              <h3 className="font-semibold">People & Moves Management</h3>
               <Button variant="outline" size="sm"><Download className="w-4 h-4" />Export</Button>
             </div>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-center">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {mockPeople.filter(p => p.role === 'donor' || p.role === 'both').length}
+                  {mockPeople.filter(p => p.roles.includes('donor')).length}
                 </p>
                 <p className="text-sm text-muted">Donors</p>
               </div>
               <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {mockPeople.filter(p => p.role === 'volunteer' || p.role === 'both').length}
+                  {mockPeople.filter(p => p.roles.includes('volunteer')).length}
                 </p>
                 <p className="text-sm text-muted">Volunteers</p>
               </div>
               <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-center">
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {mockPeople.filter(p => p.roleHistory.length > 0).length}
+                  {mockPeople.filter(p => p.roles.includes('adopter')).length}
                 </p>
-                <p className="text-sm text-muted">Role Transitions</p>
+                <p className="text-sm text-muted">Adopters</p>
+              </div>
+              <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-center">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                  {mockPeople.reduce((sum, p) => sum + Math.max(0, p.moves.length - 1), 0)}
+                </p>
+                <p className="text-sm text-muted">Total Moves</p>
               </div>
             </div>
             <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4" />
-              Transition History
+              Move History
             </h4>
             <div className="space-y-2">
-              {mockPeople.filter(p => p.roleHistory.length > 0).map(p => (
-                p.roleHistory.map(t => (
-                  <div key={t.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-primary/5">
-                    <span className="text-sm font-medium">{p.firstName} {p.lastName}</span>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{t.fromRole}</Badge>
-                      <span>&rarr;</span>
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">{t.toRole}</Badge>
+              {mockPeople.filter(p => p.moves.length > 1).map(p => (
+                p.moves.slice(1).map(m => {
+                  const added = m.toRoles.filter(r => !m.fromRoles.includes(r));
+                  const removed = m.fromRoles.filter(r => !m.toRoles.includes(r));
+                  return (
+                    <div key={m.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-primary/5">
+                      <div>
+                        <span className="text-sm font-medium">{p.firstName} {p.lastName}</span>
+                        <span className="text-xs text-muted ml-2">{formatDate(m.date)}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-sm">
+                        {added.map(r => (
+                          <Badge key={r} className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">+{r}</Badge>
+                        ))}
+                        {removed.map(r => (
+                          <Badge key={r} className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">-{r}</Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ))}
             </div>
           </CardBody>

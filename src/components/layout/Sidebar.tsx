@@ -11,7 +11,6 @@ import {
   BarChart3,
   Settings,
   X,
-  ArrowLeftRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -92,16 +91,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Role Transitions highlight */}
-        <div className="px-3 pb-4">
-          <div className="p-3 rounded-lg bg-primary/20 border border-primary/30">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary-light mb-1">
-              <ArrowLeftRight className="w-4 h-4" />
-              Role Transitions
-            </div>
-            <p className="text-xs text-white/60">2 recent transitions</p>
-          </div>
-        </div>
       </aside>
     </>
   );

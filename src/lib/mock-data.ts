@@ -38,38 +38,54 @@ export const mockPeople: Person[] = [
   {
     id: 'p-1', firstName: 'Sarah', lastName: 'Johnson', email: 'sarah.j@email.com', phone: '(555) 123-4567',
     address: '123 Oak St', city: 'Springfield', state: 'IL', zip: '62701',
-    role: 'both', roleHistory: [
-      { id: 'rt-1', personId: 'p-1', fromRole: 'donor', toRole: 'both', date: '2024-06-15', note: 'Started volunteering at weekend events' },
+    roles: ['donor', 'volunteer', 'adopter'],
+    moves: [
+      { id: 'm-1a', personId: 'p-1', fromRoles: [], toRoles: ['donor'], date: '2024-01-10', trigger: 'First donation — $500 to General Fund' },
+      { id: 'm-1b', personId: 'p-1', fromRoles: ['donor'], toRoles: ['donor', 'volunteer'], date: '2024-06-15', trigger: 'Signed up for weekend adoption events' },
+      { id: 'm-1c', personId: 'p-1', fromRoles: ['donor', 'volunteer'], toRoles: ['donor', 'volunteer', 'adopter'], date: '2024-09-22', trigger: 'Adopted Luna (DOG-2024-0067)' },
     ],
-    tags: ['Major Donor', 'Monthly Volunteer'], createdAt: '2024-01-10', updatedAt: '2024-06-15',
+    tags: ['Major Donor', 'Monthly Volunteer'], createdAt: '2024-01-10', updatedAt: '2024-09-22',
     totalDonations: 5200, totalVolunteerHours: 48, isActive: true,
   },
   {
     id: 'p-2', firstName: 'Michael', lastName: 'Chen', email: 'mchen@email.com', phone: '(555) 234-5678',
     address: '456 Maple Ave', city: 'Springfield', state: 'IL', zip: '62702',
-    role: 'donor', roleHistory: [],
+    roles: ['donor'],
+    moves: [
+      { id: 'm-2a', personId: 'p-2', fromRoles: [], toRoles: ['donor'], date: '2024-02-20', trigger: 'First donation — $5,000 to Capital Campaign' },
+    ],
     tags: ['Major Donor'], createdAt: '2024-02-20', updatedAt: '2024-02-20',
     totalDonations: 12500, totalVolunteerHours: 0, isActive: true,
   },
   {
     id: 'p-3', firstName: 'Emily', lastName: 'Rodriguez', email: 'emily.r@email.com', phone: '(555) 345-6789',
     address: '789 Pine Rd', city: 'Springfield', state: 'IL', zip: '62703',
-    role: 'volunteer', roleHistory: [
-      { id: 'rt-2', personId: 'p-3', fromRole: 'both', toRole: 'volunteer', date: '2024-08-01', note: 'Focusing on volunteer work' },
+    roles: ['volunteer'],
+    moves: [
+      { id: 'm-3a', personId: 'p-3', fromRoles: [], toRoles: ['volunteer'], date: '2024-03-05', trigger: 'Signed up for dog walking shifts' },
+      { id: 'm-3b', personId: 'p-3', fromRoles: ['volunteer'], toRoles: ['volunteer', 'donor'], date: '2024-05-10', trigger: 'First donation — $350 after 2 months volunteering' },
+      { id: 'm-3c', personId: 'p-3', fromRoles: ['volunteer', 'donor'], toRoles: ['volunteer'], date: '2024-08-01', trigger: 'Donor role lapsed — no donations in 90 days' },
     ],
     tags: ['Monthly Volunteer'], createdAt: '2024-03-05', updatedAt: '2024-08-01',
     totalDonations: 350, totalVolunteerHours: 120, isActive: true,
   },
   {
     id: 'p-4', firstName: 'James', lastName: 'Williams', email: 'jwilliams@email.com', phone: '(555) 456-7890',
-    role: 'donor', roleHistory: [],
+    roles: ['donor'],
+    moves: [
+      { id: 'm-4a', personId: 'p-4', fromRoles: [], toRoles: ['donor'], date: '2024-04-12', trigger: 'In-kind donation — 50 lbs dog food' },
+    ],
     tags: [], createdAt: '2024-04-12', updatedAt: '2024-04-12',
     totalDonations: 800, totalVolunteerHours: 0, isActive: true,
   },
   {
     id: 'p-5', firstName: 'Lisa', lastName: 'Park', email: 'lpark@email.com', phone: '(555) 567-8901',
-    role: 'volunteer', roleHistory: [],
-    tags: ['Monthly Volunteer'], createdAt: '2024-05-22', updatedAt: '2024-05-22',
+    roles: ['volunteer', 'adopter'],
+    moves: [
+      { id: 'm-5a', personId: 'p-5', fromRoles: [], toRoles: ['volunteer'], date: '2024-05-22', trigger: 'Signed up for front desk shifts' },
+      { id: 'm-5b', personId: 'p-5', fromRoles: ['volunteer'], toRoles: ['volunteer', 'adopter'], date: '2024-08-15', trigger: 'Adopted Whiskers (CAT-2024-0108)' },
+    ],
+    tags: ['Monthly Volunteer'], createdAt: '2024-05-22', updatedAt: '2024-08-15',
     totalDonations: 0, totalVolunteerHours: 64, isActive: true,
   },
 ];
@@ -179,9 +195,5 @@ export const mockDashboardStats: DashboardStats = {
   adoptionsThisMonth: 1,
   donationsThisMonth: 15320,
   volunteerHoursThisMonth: 48,
-  recentRoleTransitions: [
-    { id: 'rt-1', personId: 'p-1', fromRole: 'donor', toRole: 'both', date: '2024-06-15', note: 'Started volunteering at weekend events' },
-    { id: 'rt-2', personId: 'p-3', fromRole: 'both', toRole: 'volunteer', date: '2024-08-01', note: 'Focusing on volunteer work' },
-  ],
   flaggedAdopters: 1,
 };

@@ -5,12 +5,18 @@ import {
   Users,
   Plus,
   Search,
-  ArrowLeftRight,
   Mail,
   Phone,
   DollarSign,
   Clock,
   Filter,
+  Heart,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Sparkles,
+  CircleDot,
+  MapPin,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -18,21 +24,149 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
-import { mockPeople } from '@/lib/mock-data';
-import { formatCurrency, formatDate, getRoleBadgeColor } from '@/lib/utils';
-import type { Person, PersonRole } from '@/lib/types';
+import { mockPeople, mockDonations } from '@/lib/mock-data';
+import { formatCurrency, formatDate, getRoleBadgeColor, getMoveInsight } from '@/lib/utils';
+import type { Person, Move } from '@/lib/types';
+
+function MovesTimeline({ person }: { person: Person }) {
+  const moves = [...person.moves].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const personDonations = mockDonations.filter(d => d.personId === person.id);
+
+  if (moves.length === 0) {
+    return (
+      <div className="text-center py-6 text-muted">
+        <CircleDot className="w-8 h-8 mx-auto mb-2 opacity-40" />
+        <p className="text-sm">No moves recorded yet</p>
+        <p className="text-xs mt-1">This person joined as: {person.roles.join(', ')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {/* Timeline line */}
+      <div className="absolute left-[17px] top-3 bottom-3 w-px bg-border" />
+
+      <div className="space-y-0">
+        {moves.map((move, idx) => {
+          const insight = getMoveInsight(move);
+          const isFirst = idx === 0;
+          const isLast = idx === moves.length - 1;
+          const added = move.toRoles.filter(r => !move.fromRoles.includes(r));
+          const removed = move.fromRoles.filter(r => !move.toRoles.includes(r));
+
+          const sentimentIcon = insight.sentiment === 'positive'
+            ? <TrendingUp className="w-3.5 h-3.5" />
+            : insight.sentiment === 'negative'
+            ? <TrendingDown className="w-3.5 h-3.5" />
+            : <Minus className="w-3.5 h-3.5" />;
+
+          const sentimentColor = insight.sentiment === 'positive'
+            ? 'text-success bg-success/10 border-success/20'
+            : insight.sentiment === 'negative'
+            ? 'text-warning bg-warning/10 border-warning/20'
+            : 'text-muted bg-surface-hover border-border';
+
+          const dotColor = insight.sentiment === 'positive'
+            ? 'bg-success border-success/30'
+            : insight.sentiment === 'negative'
+            ? 'bg-warning border-warning/30'
+            : 'bg-muted border-border';
+
+          return (
+            <div key={move.id} className="relative pl-10 pb-6 last:pb-0">
+              {/* Timeline dot */}
+              <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 ${dotColor}`} />
+
+              {/* Date */}
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-xs font-medium text-muted">{formatDate(move.date)}</span>
+                {isFirst && (
+                  <Badge className="bg-primary/10 text-primary text-xs">First contact</Badge>
+                )}
+                {isLast && !isFirst && (
+                  <Badge className="bg-primary/10 text-primary text-xs">Latest</Badge>
+                )}
+              </div>
+
+              {/* Role change badges */}
+              <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                {move.fromRoles.length > 0 && (
+                  <>
+                    {move.fromRoles.map(r => (
+                      <Badge key={`from-${r}`} className={`${getRoleBadgeColor(r)} ${removed.includes(r) ? 'opacity-50 line-through' : ''}`}>
+                        {r}
+                      </Badge>
+                    ))}
+                    <span className="text-muted text-xs">&rarr;</span>
+                  </>
+                )}
+                {move.toRoles.map(r => (
+                  <Badge key={`to-${r}`} className={`${getRoleBadgeColor(r)} ${added.includes(r) ? 'ring-2 ring-offset-1 ring-primary/30' : ''}`}>
+                    {r}
+                    {added.includes(r) && <Sparkles className="w-2.5 h-2.5 ml-0.5 inline" />}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Trigger */}
+              {move.trigger && (
+                <p className="text-sm mb-2">{move.trigger}</p>
+              )}
+
+              {/* Contextual insight */}
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium ${sentimentColor}`}>
+                {sentimentIcon}
+                {insight.text}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Engagement summary after timeline */}
+      {moves.length >= 2 && (
+        <div className="mt-6 p-4 rounded-lg bg-surface-hover border border-border">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Engagement Summary</h4>
+          <div className="space-y-1.5 text-sm">
+            <p>
+              <span className="font-medium">{person.firstName}</span> has been with the shelter for{' '}
+              <span className="font-medium">
+                {Math.round((new Date().getTime() - new Date(person.createdAt).getTime()) / (1000 * 60 * 60 * 24 * 30))} months
+              </span>
+              {' '}and has gone through <span className="font-medium">{moves.length - 1} move{moves.length - 1 !== 1 ? 's' : ''}</span> since initial contact.
+            </p>
+            {person.roles.length >= 2 && (
+              <p className="text-success">
+                Currently active in {person.roles.length} roles — a highly engaged community member.
+              </p>
+            )}
+            {person.roles.length === 1 && person.moves.length > 2 && (
+              <p className="text-warning">
+                Previously more engaged. Consider outreach to explore re-engagement.
+              </p>
+            )}
+            {person.totalDonations > 0 && person.totalVolunteerHours > 0 && (
+              <p className="text-muted">
+                Lifetime: {formatCurrency(person.totalDonations)} donated + {person.totalVolunteerHours}h volunteered
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PeoplePage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [showTransitionModal, setShowTransitionModal] = useState(false);
-  const [transitionPerson, setTransitionPerson] = useState<Person | null>(null);
 
   const filtered = mockPeople.filter(p => {
     const matchesSearch = `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === 'all' || p.role === roleFilter;
+    const matchesRole = roleFilter === 'all' || p.roles.includes(roleFilter);
     return matchesSearch && matchesRole;
   });
 
@@ -53,14 +187,16 @@ export default function PeoplePage() {
       ),
     },
     {
-      key: 'role',
-      header: 'Role',
+      key: 'roles',
+      header: 'Roles',
       render: (p: Person) => (
-        <div className="flex items-center gap-2">
-          <Badge className={getRoleBadgeColor(p.role)}>{p.role}</Badge>
-          {p.roleHistory.length > 0 && (
-            <span title="Has role transitions" className="text-primary">
-              <ArrowLeftRight className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1 flex-wrap">
+          {p.roles.map(r => (
+            <Badge key={r} className={getRoleBadgeColor(r)}>{r}</Badge>
+          ))}
+          {p.moves.length > 1 && (
+            <span className="text-xs text-muted ml-1" title={`${p.moves.length - 1} move(s)`}>
+              &middot; {p.moves.length - 1} move{p.moves.length - 1 !== 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -71,8 +207,8 @@ export default function PeoplePage() {
       header: 'Contact',
       hideOnMobile: true,
       render: (p: Person) => (
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-1 text-muted"><Phone className="w-3 h-3" />{p.phone}</div>
+        <div className="flex items-center gap-1 text-muted">
+          <Phone className="w-3 h-3" />{p.phone}
         </div>
       ),
     },
@@ -98,24 +234,6 @@ export default function PeoplePage() {
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: '',
-      render: (p: Person) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setTransitionPerson(p);
-            setShowTransitionModal(true);
-          }}
-          title="Change role"
-        >
-          <ArrowLeftRight className="w-4 h-4" />
-        </Button>
-      ),
-    },
   ];
 
   return (
@@ -123,7 +241,7 @@ export default function PeoplePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">People</h1>
-          <p className="text-muted text-sm mt-1">Manage donors and volunteers</p>
+          <p className="text-muted text-sm mt-1">Manage donors, volunteers, and adopters</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
@@ -150,7 +268,7 @@ export default function PeoplePage() {
                 <option value="all">All Roles</option>
                 <option value="donor">Donors</option>
                 <option value="volunteer">Volunteers</option>
-                <option value="both">Both</option>
+                <option value="adopter">Adopters</option>
               </Select>
             </div>
           </div>
@@ -158,18 +276,22 @@ export default function PeoplePage() {
       </Card>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{mockPeople.filter(p => p.role === 'donor' || p.role === 'both').length}</p>
+          <p className="text-2xl font-bold text-primary">{mockPeople.filter(p => p.roles.includes('donor')).length}</p>
           <p className="text-sm text-muted">Donors</p>
         </div>
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-success">{mockPeople.filter(p => p.role === 'volunteer' || p.role === 'both').length}</p>
+          <p className="text-2xl font-bold text-success">{mockPeople.filter(p => p.roles.includes('volunteer')).length}</p>
           <p className="text-sm text-muted">Volunteers</p>
         </div>
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-secondary">{mockPeople.filter(p => p.role === 'both').length}</p>
-          <p className="text-sm text-muted">Dual Role</p>
+          <p className="text-2xl font-bold text-secondary">{mockPeople.filter(p => p.roles.includes('adopter')).length}</p>
+          <p className="text-sm text-muted">Adopters</p>
+        </div>
+        <div className="bg-surface rounded-xl border border-border p-4 text-center">
+          <p className="text-2xl font-bold text-warning">{mockPeople.filter(p => p.roles.length >= 2).length}</p>
+          <p className="text-sm text-muted">Multi-role</p>
         </div>
       </div>
 
@@ -199,12 +321,12 @@ export default function PeoplePage() {
             <FormField label="Phone" required>
               <Input placeholder="(555) 000-0000" required />
             </FormField>
-            <FormField label="Role" required>
+            <FormField label="Initial Role" required>
               <Select required>
                 <option value="">Select role</option>
                 <option value="donor">Donor</option>
                 <option value="volunteer">Volunteer</option>
-                <option value="both">Both</option>
+                <option value="adopter">Adopter</option>
               </Select>
             </FormField>
           </div>
@@ -233,102 +355,59 @@ export default function PeoplePage() {
       <Modal open={!!selectedPerson} onClose={() => setSelectedPerson(null)} title={selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : ''} size="lg">
         {selectedPerson && (
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xl font-medium">
+            {/* Header */}
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xl font-medium shrink-0">
                 {selectedPerson.firstName[0]}{selectedPerson.lastName[0]}
               </div>
-              <div>
-                <Badge className={getRoleBadgeColor(selectedPerson.role)}>{selectedPerson.role}</Badge>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  {selectedPerson.roles.map(r => (
+                    <Badge key={r} className={getRoleBadgeColor(r)}>{r}</Badge>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                   <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{selectedPerson.email}</span>
                   <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{selectedPerson.phone}</span>
+                  {selectedPerson.city && (
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{selectedPerson.city}, {selectedPerson.state}</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-success/5 border border-success/20 text-center">
-                <p className="text-xl font-bold text-success">{formatCurrency(selectedPerson.totalDonations)}</p>
-                <p className="text-sm text-muted">Total Donations</p>
+            {/* Quick stats */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-success/5 border border-success/20 text-center">
+                <p className="text-lg font-bold text-success">{formatCurrency(selectedPerson.totalDonations)}</p>
+                <p className="text-xs text-muted">Donated</p>
               </div>
-              <div className="p-4 rounded-lg bg-info/5 border border-info/20 text-center">
-                <p className="text-xl font-bold text-info">{selectedPerson.totalVolunteerHours}h</p>
-                <p className="text-sm text-muted">Volunteer Hours</p>
+              <div className="p-3 rounded-lg bg-info/5 border border-info/20 text-center">
+                <p className="text-lg font-bold text-info">{selectedPerson.totalVolunteerHours}h</p>
+                <p className="text-xs text-muted">Volunteered</p>
+              </div>
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
+                <p className="text-lg font-bold text-primary">{selectedPerson.moves.length - 1}</p>
+                <p className="text-xs text-muted">Move{selectedPerson.moves.length - 1 !== 1 ? 's' : ''}</p>
               </div>
             </div>
 
             {selectedPerson.tags.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedPerson.tags.map(tag => (
-                    <Badge key={tag} className="bg-primary/10 text-primary">{tag}</Badge>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedPerson.tags.map(tag => (
+                  <Badge key={tag} className="bg-primary/10 text-primary">{tag}</Badge>
+                ))}
               </div>
             )}
 
-            {selectedPerson.roleHistory.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Role History</h3>
-                <div className="space-y-2">
-                  {selectedPerson.roleHistory.map(t => (
-                    <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                      <ArrowLeftRight className="w-4 h-4 text-primary shrink-0" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Badge className={getRoleBadgeColor(t.fromRole)}>{t.fromRole}</Badge>
-                          <span className="text-muted">&rarr;</span>
-                          <Badge className={getRoleBadgeColor(t.toRole)}>{t.toRole}</Badge>
-                        </div>
-                        {t.note && <p className="text-xs text-muted mt-1">{t.note}</p>}
-                      </div>
-                      <span className="text-xs text-muted">{formatDate(t.date)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Moves Management Timeline */}
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted mb-4">Moves Management</h3>
+              <MovesTimeline person={selectedPerson} />
+            </div>
 
             <p className="text-xs text-muted">Member since {formatDate(selectedPerson.createdAt)}</p>
           </div>
-        )}
-      </Modal>
-
-      {/* Role Transition Modal */}
-      <Modal open={showTransitionModal} onClose={() => { setShowTransitionModal(false); setTransitionPerson(null); }} title="Change Role" size="sm">
-        {transitionPerson && (
-          <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowTransitionModal(false); setTransitionPerson(null); }}>
-            <p className="text-sm">
-              Change role for <strong>{transitionPerson.firstName} {transitionPerson.lastName}</strong>
-            </p>
-            <div className="flex items-center gap-3">
-              <Badge className={getRoleBadgeColor(transitionPerson.role)}>{transitionPerson.role}</Badge>
-              <ArrowLeftRight className="w-4 h-4 text-muted" />
-              <FormField label="">
-                <Select required>
-                  <option value="">New role</option>
-                  {(['donor', 'volunteer', 'both'] as PersonRole[])
-                    .filter(r => r !== transitionPerson.role)
-                    .map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                </Select>
-              </FormField>
-            </div>
-            <FormField label="Reason for transition">
-              <Select required>
-                <option value="">Select reason</option>
-                <option value="started-volunteering">Started volunteering</option>
-                <option value="started-donating">Started donating</option>
-                <option value="focus-volunteer">Focusing on volunteer work</option>
-                <option value="focus-donor">Focusing on donations</option>
-                <option value="dual-role">Taking on dual role</option>
-              </Select>
-            </FormField>
-            <div className="flex justify-end gap-3 pt-4 border-t border-border">
-              <Button variant="outline" type="button" onClick={() => { setShowTransitionModal(false); setTransitionPerson(null); }}>Cancel</Button>
-              <Button type="submit">Save Transition</Button>
-            </div>
-          </form>
         )}
       </Modal>
     </div>
