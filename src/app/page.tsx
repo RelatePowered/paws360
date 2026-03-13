@@ -1,0 +1,218 @@
+'use client';
+
+import {
+  Users,
+  PawPrint,
+  Heart,
+  DollarSign,
+  Clock,
+  ArrowLeftRight,
+  AlertTriangle,
+  TrendingUp,
+} from 'lucide-react';
+import { StatCard } from '@/components/ui/StatCard';
+import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { mockDashboardStats, mockPeople, mockAnimals, mockDonations, mockAdopters } from '@/lib/mock-data';
+import { formatCurrency, formatDate, getRoleBadgeColor, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
+import Link from 'next/link';
+
+export default function DashboardPage() {
+  const stats = mockDashboardStats;
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-muted text-sm mt-1">Overview of your shelter operations</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total People"
+          value={stats.totalPeople}
+          subtitle={`${stats.totalDonors} donors, ${stats.totalVolunteers} volunteers`}
+          icon={<Users className="w-5 h-5" />}
+          iconColor="bg-primary/10 text-primary"
+        />
+        <StatCard
+          title="Animals"
+          value={stats.totalAnimals}
+          subtitle={`${stats.availableAnimals} available for adoption`}
+          icon={<PawPrint className="w-5 h-5" />}
+          iconColor="bg-success/10 text-success"
+        />
+        <StatCard
+          title="Donations This Month"
+          value={formatCurrency(stats.donationsThisMonth)}
+          subtitle={`${stats.adoptionsThisMonth} adoption(s) this month`}
+          icon={<DollarSign className="w-5 h-5" />}
+          iconColor="bg-warning/10 text-warning"
+        />
+        <StatCard
+          title="Volunteer Hours"
+          value={stats.volunteerHoursThisMonth}
+          subtitle="Hours this month"
+          icon={<Clock className="w-5 h-5" />}
+          iconColor="bg-info/10 text-info"
+        />
+      </div>
+
+      {/* Role Transitions Banner */}
+      {stats.recentRoleTransitions.length > 0 && (
+        <Card>
+          <CardHeader className="bg-primary/5 dark:bg-primary/10">
+            <div className="flex items-center gap-2">
+              <ArrowLeftRight className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold">Recent Role Transitions</h2>
+              <Badge className="bg-primary/20 text-primary ml-2">{stats.recentRoleTransitions.length}</Badge>
+            </div>
+          </CardHeader>
+          <CardBody className="divide-y divide-border">
+            {stats.recentRoleTransitions.map(transition => {
+              const person = mockPeople.find(p => p.id === transition.personId);
+              return (
+                <div key={transition.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary text-sm font-medium">
+                      {person?.firstName?.[0]}{person?.lastName?.[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{person?.firstName} {person?.lastName}</p>
+                      <p className="text-xs text-muted">{transition.note}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge className={getRoleBadgeColor(transition.fromRole)}>{transition.fromRole}</Badge>
+                    <ArrowLeftRight className="w-3 h-3 text-muted" />
+                    <Badge className={getRoleBadgeColor(transition.toRole)}>{transition.toRole}</Badge>
+                    <span className="text-xs text-muted ml-2 hidden sm:inline">{formatDate(transition.date)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </CardBody>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Flagged Adopters */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-danger" />
+                <h2 className="font-semibold">Flagged Adopters</h2>
+              </div>
+              <Link href="/adoptions" className="text-sm text-primary hover:underline">View all</Link>
+            </div>
+          </CardHeader>
+          <CardBody>
+            {mockAdopters.filter(a => a.flagged).length === 0 ? (
+              <p className="text-muted text-sm text-center py-4">No flagged adopters</p>
+            ) : (
+              <div className="space-y-3">
+                {mockAdopters.filter(a => a.flagged).map(adopter => (
+                  <div key={adopter.id} className="flex items-center justify-between p-3 rounded-lg bg-danger/5 border border-danger/20">
+                    <div>
+                      <p className="text-sm font-medium">{adopter.firstName} {adopter.lastName}</p>
+                      <p className="text-xs text-muted">{adopter.returnHistory.length} return(s)</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      {adopter.structuredNotes.map(note => (
+                        <Badge key={note.id} className={getSeverityColor(note.severity)}>
+                          {note.tagLabel}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Recent Donations */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-success" />
+                <h2 className="font-semibold">Recent Donations</h2>
+              </div>
+              <Link href="/donations" className="text-sm text-primary hover:underline">View all</Link>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-3">
+              {mockDonations.slice(0, 5).map(donation => (
+                <div key={donation.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-success/10 rounded-full flex items-center justify-center text-success">
+                      {donation.type === 'monetary' ? <DollarSign className="w-4 h-4" /> :
+                       donation.type === 'time' ? <Clock className="w-4 h-4" /> :
+                       <Heart className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{donation.personName}</p>
+                      <p className="text-xs text-muted">{donation.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {donation.type === 'monetary' ? formatCurrency(donation.amount!) :
+                       donation.type === 'time' ? `${donation.hours}h` :
+                       formatCurrency(donation.estimatedValue || 0)}
+                    </p>
+                    <p className="text-xs text-muted">{formatDate(donation.date)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Available Animals */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PawPrint className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold">Animals Available for Adoption</h2>
+            </div>
+            <Link href="/animals" className="text-sm text-primary hover:underline">View all</Link>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockAnimals.filter(a => a.status === 'available').map(animal => (
+              <div key={animal.id} className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="font-medium">{animal.name}</p>
+                    <p className="text-xs text-muted">{animal.animalId}</p>
+                  </div>
+                  <Badge className={getStatusBadgeColor(animal.status)}>{animal.status}</Badge>
+                </div>
+                <div className="space-y-1 text-sm text-muted">
+                  <p>{animal.breed} &middot; {animal.color}</p>
+                  <p>{animal.age} &middot; {animal.gender} &middot; {animal.size}</p>
+                </div>
+                {animal.tags.length > 0 && (
+                  <div className="flex gap-1 mt-2">
+                    {animal.tags.map(tag => (
+                      <Badge key={tag} className="bg-primary/10 text-primary text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+    </div>
+  );
+}
