@@ -10,6 +10,7 @@ import {
   Heart,
   Download,
   Receipt,
+  Building2,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -29,7 +30,7 @@ export default function DonationsPage() {
   const [donationType, setDonationType] = useState('monetary');
 
   const filtered = mockDonations.filter(d => {
-    const matchesSearch = `${d.personName} ${d.description} ${d.category}`.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = `${d.personName || ''} ${d.organizationName || ''} ${d.description} ${d.category}`.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || d.type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -49,8 +50,16 @@ export default function DonationsPage() {
       header: 'Donor',
       render: (d: Donation) => (
         <div>
-          <p className="font-medium text-sm">{d.personName}</p>
-          <p className="text-xs text-muted">{d.category}</p>
+          <p className="font-medium text-sm">{d.personName || d.organizationName}</p>
+          {d.organizationName && d.personName && (
+            <p className="text-xs text-muted flex items-center gap-1"><Building2 className="w-3 h-3" />{d.organizationName}</p>
+          )}
+          {!d.personName && d.organizationName && (
+            <p className="text-xs text-muted">{d.category}</p>
+          )}
+          {d.personName && !d.organizationName && (
+            <p className="text-xs text-muted">{d.category}</p>
+          )}
         </div>
       ),
     },

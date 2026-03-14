@@ -8,6 +8,7 @@ import {
   PawPrint,
   Heart,
   DollarSign,
+  Building2,
   BarChart3,
   Settings,
   X,
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Animals', href: '/animals', icon: PawPrint },
   { name: 'Adoptions', href: '/adoptions', icon: Heart },
   { name: 'Donations', href: '/donations', icon: DollarSign },
+  { name: 'Organizations', href: '/organizations', icon: Building2 },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Admin', href: '/admin', icon: Settings },
 ];

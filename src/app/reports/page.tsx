@@ -5,6 +5,7 @@ import {
   BarChart3,
   Download,
   FileSpreadsheet,
+  FileText,
   DollarSign,
   Users,
   PawPrint,
@@ -12,15 +13,20 @@ import {
   Heart,
   ArrowLeftRight,
   Calendar,
+  Building2,
+  Mail,
+  Printer,
+  CheckCircle2,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormField, Select, Input } from '@/components/ui/FormField';
-import { mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/lib/mock-data';
+import { mockPeople, mockAnimals, mockDonations, mockAdoptions, buildTaxLetters } from '@/lib/mock-data';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import type { TaxLetterRecord } from '@/lib/types';
 
-type ReportType = 'donations' | 'volunteers' | 'animals' | 'adoptions' | 'people';
+type ReportType = 'donations' | 'volunteers' | 'animals' | 'adoptions' | 'people' | 'tax-letters';
 
 const reportConfigs: Record<ReportType, { title: string; description: string; icon: React.ReactNode; color: string }> = {
   donations: {
@@ -52,6 +58,12 @@ const reportConfigs: Record<ReportType, { title: string; description: string; ic
     description: 'Donor/volunteer roster and role change history',
     icon: <Users className="w-5 h-5" />,
     color: 'bg-primary/10 text-primary',
+  },
+  'tax-letters': {
+    title: 'Tax Letters',
+    description: 'Generate annual tax acknowledgment letters for individuals and organizations',
+    icon: <FileText className="w-5 h-5" />,
+    color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
   },
 };
 

@@ -17,6 +17,7 @@ import {
   Sparkles,
   CircleDot,
   MapPin,
+  Building2,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -203,6 +204,19 @@ export default function PeoplePage() {
       ),
     },
     {
+      key: 'organization',
+      header: 'Organization',
+      hideOnMobile: true,
+      render: (p: Person) => (
+        p.organizationName ? (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Building2 className="w-3 h-3 text-muted" />
+            <span>{p.organizationName}</span>
+          </div>
+        ) : <span className="text-xs text-muted">—</span>
+      ),
+    },
+    {
       key: 'contact',
       header: 'Contact',
       hideOnMobile: true,
@@ -371,6 +385,9 @@ export default function PeoplePage() {
                   <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{selectedPerson.phone}</span>
                   {selectedPerson.city && (
                     <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{selectedPerson.city}, {selectedPerson.state}</span>
+                  )}
+                  {selectedPerson.organizationName && (
+                    <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" />{selectedPerson.organizationName}</span>
                   )}
                 </div>
               </div>

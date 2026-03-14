@@ -25,6 +25,8 @@ export interface Person {
   roles: string[]; // current active roles: 'donor', 'volunteer', 'adopter'
   moves: Move[];
   tags: string[];
+  organizationId?: string; // linked organization
+  organizationName?: string;
   createdAt: string;
   updatedAt: string;
   totalDonations: number;
@@ -32,12 +34,57 @@ export interface Person {
   isActive: boolean;
 }
 
+// ========== Organization Types ==========
+
+export interface Organization {
+  id: string;
+  name: string;
+  type: 'corporation' | 'foundation' | 'nonprofit' | 'small-business' | 'other';
+  ein?: string; // Employer Identification Number for tax purposes
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  memberIds: string[]; // people associated with this org
+  roles: string[]; // 'donor', 'volunteer', 'sponsor'
+  totalDonations: number;
+  totalVolunteerHours: number;
+  matchingGiftProgram: boolean;
+  matchRatio?: number; // e.g., 1.0 = 1:1 match, 2.0 = 2:1 match
+  tags: string[];
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+}
+
+export interface TaxLetterRecord {
+  id: string;
+  recipientType: 'individual' | 'organization';
+  recipientId: string;
+  recipientName: string;
+  ein?: string;
+  address: string;
+  taxYear: number;
+  totalMonetary: number;
+  totalInKind: number;
+  totalCombined: number;
+  donations: Donation[];
+  generatedAt: string;
+  status: 'draft' | 'generated' | 'sent';
+}
+
 export type DonationType = 'monetary' | 'in-kind' | 'time';
 
 export interface Donation {
   id: string;
-  personId: string;
-  personName: string;
+  personId?: string;
+  personName?: string;
+  organizationId?: string;
+  organizationName?: string;
   type: DonationType;
   amount?: number;
   description: string;
