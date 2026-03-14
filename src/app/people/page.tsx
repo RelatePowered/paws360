@@ -25,13 +25,13 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
-import { mockPeople, mockDonations } from '@/lib/mock-data';
+import { usePeople, useDonations, mockPeople, mockDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getRoleBadgeColor, getMoveInsight } from '@/lib/utils';
-import type { Person, Move } from '@/lib/types';
+import type { Person, Move, Donation } from '@/lib/types';
 
-function MovesTimeline({ person }: { person: Person }) {
+function MovesTimeline({ person, donations }: { person: Person; donations: Donation[] }) {
   const moves = [...person.moves].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const personDonations = mockDonations.filter(d => d.personId === person.id);
+  const personDonations = donations.filter(d => d.personId === person.id);
 
   if (moves.length === 0) {
     return (
@@ -160,12 +160,14 @@ function MovesTimeline({ person }: { person: Person }) {
 }
 
 export default function PeoplePage() {
+  const allPeople = usePeople(mockPeople);
+  const allDonations = useDonations(mockDonations);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
-  const filtered = mockPeople.filter(p => {
+  const filtered = allPeople.filter(p => {
     const matchesSearch = `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter === 'all' || p.roles.includes(roleFilter);
     return matchesSearch && matchesRole;
@@ -292,19 +294,19 @@ export default function PeoplePage() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{mockPeople.filter(p => p.roles.includes('donor')).length}</p>
+          <p className="text-2xl font-bold text-primary">{allPeople.filter(p => p.roles.includes('donor')).length}</p>
           <p className="text-sm text-muted">Donors</p>
         </div>
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-success">{mockPeople.filter(p => p.roles.includes('volunteer')).length}</p>
+          <p className="text-2xl font-bold text-success">{allPeople.filter(p => p.roles.includes('volunteer')).length}</p>
           <p className="text-sm text-muted">Volunteers</p>
         </div>
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-secondary">{mockPeople.filter(p => p.roles.includes('adopter')).length}</p>
+          <p className="text-2xl font-bold text-secondary">{allPeople.filter(p => p.roles.includes('adopter')).length}</p>
           <p className="text-sm text-muted">Adopters</p>
         </div>
         <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-warning">{mockPeople.filter(p => p.roles.length >= 2).length}</p>
+          <p className="text-2xl font-bold text-warning">{allPeople.filter(p => p.roles.length >= 2).length}</p>
           <p className="text-sm text-muted">Multi-role</p>
         </div>
       </div>
@@ -420,7 +422,7 @@ export default function PeoplePage() {
             {/* Moves Management Timeline */}
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted mb-4">Moves Management</h3>
-              <MovesTimeline person={selectedPerson} />
+              <MovesTimeline person={selectedPerson} donations={allDonations} />
             </div>
 
             <p className="text-xs text-muted">Member since {formatDate(selectedPerson.createdAt)}</p>

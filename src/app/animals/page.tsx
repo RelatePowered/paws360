@@ -16,18 +16,19 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
-import { mockAnimals } from '@/lib/mock-data';
+import { useAnimals, mockAnimals } from '@/hooks/useTenantData';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
 import type { Animal } from '@/lib/types';
 
 export default function AnimalsPage() {
+  const allAnimals = useAnimals(mockAnimals);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [speciesFilter, setSpeciesFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
 
-  const filtered = mockAnimals.filter(a => {
+  const filtered = allAnimals.filter(a => {
     const matchesSearch = `${a.name} ${a.animalId} ${a.breed}`.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
     const matchesSpecies = speciesFilter === 'all' || a.species === speciesFilter;
@@ -116,7 +117,7 @@ export default function AnimalsPage() {
                 : 'border-border bg-surface hover:bg-surface-hover'
             }`}
           >
-            <p className="text-lg font-bold">{mockAnimals.filter(a => a.status === status).length}</p>
+            <p className="text-lg font-bold">{allAnimals.filter(a => a.status === status).length}</p>
             <p className="text-xs text-muted capitalize">{status.replace('-', ' ')}</p>
           </button>
         ))}

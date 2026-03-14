@@ -12,12 +12,15 @@ import {
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { mockDashboardStats, mockAnimals, mockDonations, mockAdopters } from '@/lib/mock-data';
+import { useDashboardStats, useAnimals, useDonations, useAdopters, mockDashboardStats, mockAnimals, mockDonations, mockAdopters } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const stats = mockDashboardStats;
+  const stats = useDashboardStats(mockDashboardStats);
+  const animals = useAnimals(mockAnimals);
+  const donations = useDonations(mockDonations);
+  const adopters = useAdopters(mockAdopters);
 
   return (
     <div className="space-y-6">
@@ -72,11 +75,11 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardBody>
-            {mockAdopters.filter(a => a.flagged).length === 0 ? (
+            {adopters.filter(a => a.flagged).length === 0 ? (
               <p className="text-muted text-sm text-center py-4">No flagged adopters</p>
             ) : (
               <div className="space-y-3">
-                {mockAdopters.filter(a => a.flagged).map(adopter => (
+                {adopters.filter(a => a.flagged).map(adopter => (
                   <div key={adopter.id} className="flex items-center justify-between p-3 rounded-lg bg-danger/5 border border-danger/20">
                     <div>
                       <p className="text-sm font-medium">{adopter.firstName} {adopter.lastName}</p>
@@ -109,7 +112,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
-              {mockDonations.slice(0, 5).map(donation => (
+              {donations.slice(0, 5).map(donation => (
                 <div key={donation.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-success/10 rounded-full flex items-center justify-center text-success">
@@ -150,7 +153,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockAnimals.filter(a => a.status === 'available').map(animal => (
+            {animals.filter(a => a.status === 'available').map(animal => (
               <div key={animal.id} className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <div>

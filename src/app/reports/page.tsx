@@ -22,7 +22,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormField, Select, Input } from '@/components/ui/FormField';
-import { mockPeople, mockAnimals, mockDonations, mockAdoptions, buildTaxLetters } from '@/lib/mock-data';
+import { usePeople, useAnimals, useDonations, useAdoptions, mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { TaxLetterRecord } from '@/lib/types';
 
@@ -68,11 +68,15 @@ const reportConfigs: Record<ReportType, { title: string; description: string; ic
 };
 
 export default function ReportsPage() {
+  const allPeople = usePeople(mockPeople);
+  const allAnimals = useAnimals(mockAnimals);
+  const allDonations = useDonations(mockDonations);
+  const allAdoptions = useAdoptions(mockAdoptions);
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
 
-  const totalMonetary = mockDonations.filter(d => d.type === 'monetary').reduce((s, d) => s + (d.amount || 0), 0);
-  const totalInKind = mockDonations.filter(d => d.type === 'in-kind').reduce((s, d) => s + (d.estimatedValue || 0), 0);
-  const totalHours = mockDonations.filter(d => d.type === 'time').reduce((s, d) => s + (d.hours || 0), 0);
+  const totalMonetary = allDonations.filter(d => d.type === 'monetary').reduce((s, d) => s + (d.amount || 0), 0);
+  const totalInKind = allDonations.filter(d => d.type === 'in-kind').reduce((s, d) => s + (d.estimatedValue || 0), 0);
+  const totalHours = allDonations.filter(d => d.type === 'time').reduce((s, d) => s + (d.hours || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -178,7 +182,7 @@ export default function ReportsPage() {
             <h4 className="text-sm font-medium mb-3">By Category</h4>
             <div className="space-y-2">
               {['General Fund', 'Capital Campaign', 'Supplies', 'Events', 'Animal Care', 'Administration'].map(cat => {
-                const catDonations = mockDonations.filter(d => d.category === cat);
+                const catDonations = allDonations.filter(d => d.category === cat);
                 const catTotal = catDonations.reduce((s, d) => s + (d.amount || d.estimatedValue || 0), 0);
                 if (catDonations.length === 0) return null;
                 return (
@@ -208,7 +212,7 @@ export default function ReportsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {['available', 'adopted', 'foster', 'medical-hold'].map(status => (
                 <div key={status} className="p-4 rounded-lg bg-surface-hover text-center">
-                  <p className="text-2xl font-bold">{mockAnimals.filter(a => a.status === status).length}</p>
+                  <p className="text-2xl font-bold">{allAnimals.filter(a => a.status === status).length}</p>
                   <p className="text-sm text-muted capitalize">{status.replace('-', ' ')}</p>
                 </div>
               ))}
@@ -216,7 +220,7 @@ export default function ReportsPage() {
             <h4 className="text-sm font-medium mb-3">By Species</h4>
             <div className="space-y-2">
               {['dog', 'cat', 'bird', 'rabbit', 'other'].map(species => {
-                const count = mockAnimals.filter(a => a.species === species).length;
+                const count = allAnimals.filter(a => a.species === species).length;
                 if (count === 0) return null;
                 return (
                   <div key={species} className="flex items-center justify-between py-2">
@@ -242,25 +246,25 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-center">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {mockPeople.filter(p => p.roles.includes('donor')).length}
+                  {allPeople.filter(p => p.roles.includes('donor')).length}
                 </p>
                 <p className="text-sm text-muted">Donors</p>
               </div>
               <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {mockPeople.filter(p => p.roles.includes('volunteer')).length}
+                  {allPeople.filter(p => p.roles.includes('volunteer')).length}
                 </p>
                 <p className="text-sm text-muted">Volunteers</p>
               </div>
               <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-center">
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {mockPeople.filter(p => p.roles.includes('adopter')).length}
+                  {allPeople.filter(p => p.roles.includes('adopter')).length}
                 </p>
                 <p className="text-sm text-muted">Adopters</p>
               </div>
               <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-center">
                 <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {mockPeople.reduce((sum, p) => sum + Math.max(0, p.moves.length - 1), 0)}
+                  {allPeople.reduce((sum, p) => sum + Math.max(0, p.moves.length - 1), 0)}
                 </p>
                 <p className="text-sm text-muted">Total Moves</p>
               </div>
@@ -270,7 +274,7 @@ export default function ReportsPage() {
               Move History
             </h4>
             <div className="space-y-2">
-              {mockPeople.filter(p => p.moves.length > 1).map(p => (
+              {allPeople.filter(p => p.moves.length > 1).map(p => (
                 p.moves.slice(1).map(m => {
                   const added = m.toRoles.filter(r => !m.fromRoles.includes(r));
                   const removed = m.fromRoles.filter(r => !m.toRoles.includes(r));
@@ -312,7 +316,7 @@ export default function ReportsPage() {
             </div>
             <h4 className="text-sm font-medium mb-3">By Volunteer</h4>
             <div className="space-y-2">
-              {mockPeople.filter(p => p.totalVolunteerHours > 0).sort((a, b) => b.totalVolunteerHours - a.totalVolunteerHours).map(p => (
+              {allPeople.filter(p => p.totalVolunteerHours > 0).sort((a, b) => b.totalVolunteerHours - a.totalVolunteerHours).map(p => (
                 <div key={p.id} className="flex items-center justify-between py-2">
                   <span className="text-sm">{p.firstName} {p.lastName}</span>
                   <span className="font-medium">{p.totalVolunteerHours}h</span>
@@ -335,19 +339,19 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {mockAdoptions.filter(a => a.status === 'completed').length}
+                  {allAdoptions.filter(a => a.status === 'completed').length}
                 </p>
                 <p className="text-sm text-muted">Completed</p>
               </div>
               <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-center">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {mockAdoptions.filter(a => a.status === 'returned').length}
+                  {allAdoptions.filter(a => a.status === 'returned').length}
                 </p>
                 <p className="text-sm text-muted">Returned</p>
               </div>
               <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-center">
                 <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(mockAdoptions.reduce((s, a) => s + a.fee, 0))}
+                  {formatCurrency(allAdoptions.reduce((s, a) => s + a.fee, 0))}
                 </p>
                 <p className="text-sm text-muted">Total Fees</p>
               </div>

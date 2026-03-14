@@ -17,11 +17,14 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
-import { mockAdopters, mockAdoptions, mockTags } from '@/lib/mock-data';
+import { useAdopters, useAdoptions, useTags, mockAdopters, mockAdoptions, mockTags } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getSeverityColor } from '@/lib/utils';
 import type { Adopter, Adoption } from '@/lib/types';
 
 export default function AdoptionsPage() {
+  const allAdopters = useAdopters(mockAdopters);
+  const allAdoptions = useAdoptions(mockAdoptions);
+  const allTags = useTags(mockTags);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'adopters' | 'adoptions'>('adopters');
   const [showAddAdopterModal, setShowAddAdopterModal] = useState(false);
@@ -30,13 +33,13 @@ export default function AdoptionsPage() {
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [noteAdopter, setNoteAdopter] = useState<Adopter | null>(null);
 
-  const adopterAlertTags = mockTags.filter(t => t.category === 'adopter');
+  const adopterAlertTags = allTags.filter(t => t.category === 'adopter');
 
-  const filteredAdopters = mockAdopters.filter(a =>
+  const filteredAdopters = allAdopters.filter(a =>
     `${a.firstName} ${a.lastName} ${a.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredAdoptions = mockAdoptions.filter(a =>
+  const filteredAdoptions = allAdoptions.filter(a =>
     `${a.animalName} ${a.adopterName}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -185,12 +188,12 @@ export default function AdoptionsPage() {
       </div>
 
       {/* Alert banner for flagged adopters */}
-      {mockAdopters.filter(a => a.flagged).length > 0 && (
+      {allAdopters.filter(a => a.flagged).length > 0 && (
         <div className="p-4 rounded-lg bg-danger/5 border border-danger/20 flex items-start gap-3">
           <Shield className="w-5 h-5 text-danger shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-danger">
-              {mockAdopters.filter(a => a.flagged).length} Flagged Adopter(s)
+              {allAdopters.filter(a => a.flagged).length} Flagged Adopter(s)
             </p>
             <p className="text-xs text-muted mt-1">
               Review flagged adopters before approving new adoptions.
@@ -207,7 +210,7 @@ export default function AdoptionsPage() {
             tab === 'adopters' ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'
           }`}
         >
-          Adopters ({mockAdopters.length})
+          Adopters ({allAdopters.length})
         </button>
         <button
           onClick={() => setTab('adoptions')}
@@ -215,7 +218,7 @@ export default function AdoptionsPage() {
             tab === 'adoptions' ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'
           }`}
         >
-          Adoptions ({mockAdoptions.length})
+          Adoptions ({allAdoptions.length})
         </button>
       </div>
 
@@ -406,7 +409,7 @@ export default function AdoptionsPage() {
           <FormField label="Adopter" required>
             <Select required>
               <option value="">Select adopter...</option>
-              {mockAdopters.map(a => (
+              {allAdopters.map(a => (
                 <option key={a.id} value={a.id}>
                   {a.flagged ? '⚠ ' : ''}{a.firstName} {a.lastName}
                 </option>

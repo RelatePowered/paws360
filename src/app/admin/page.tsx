@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings,
   Plus,
@@ -21,8 +21,7 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { useAuth } from '@/context/AuthContext';
-import { getUsers } from '@/lib/tenant-data';
-import { mockTags, mockAlertRules } from '@/lib/mock-data';
+import { useUsers, useTags, useAlertRules, mockTags, mockAlertRules, mockUsers } from '@/hooks/useTenantData';
 import { formatDate, generateId, getSeverityColor } from '@/lib/utils';
 import type { AdminTag, AlertRule, User, UserRole } from '@/lib/types';
 
@@ -34,17 +33,27 @@ export default function AdminPage() {
 
   const [tab, setTab] = useState<AdminTab>('users');
 
+  // ── Hooks for Supabase-backed data (falls back to mock) ──
+  const fetchedUsers = useUsers(mockUsers.filter(u => u.tenantId === tenantId));
+  const fetchedTags = useTags(mockTags.filter(t => t.tenantId === tenantId));
+  const fetchedRules = useAlertRules(mockAlertRules.filter(r => r.tenantId === tenantId));
+
   // ── Tags state ──
   const [tagCategory, setTagCategory] = useState<string>('all');
   const [showAddTagModal, setShowAddTagModal] = useState(false);
-  const [tags, setTags] = useState<AdminTag[]>(mockTags);
+  const [tags, setTags] = useState<AdminTag[]>(fetchedTags);
 
   // ── Rules state ──
   const [showAddRuleModal, setShowAddRuleModal] = useState(false);
-  const [rules, setRules] = useState<AlertRule[]>(mockAlertRules);
+  const [rules, setRules] = useState<AlertRule[]>(fetchedRules);
 
   // ── Users state ──
-  const [users, setUsers] = useState<User[]>(() => getUsers(tenantId));
+  const [users, setUsers] = useState<User[]>(fetchedUsers);
+
+  // Sync hook results into local state when Supabase data arrives
+  useEffect(() => { setUsers(fetchedUsers); }, [fetchedUsers]);
+  useEffect(() => { setTags(fetchedTags); }, [fetchedTags]);
+  useEffect(() => { setRules(fetchedRules); }, [fetchedRules]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState<string>('all');

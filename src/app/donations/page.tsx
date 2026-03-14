@@ -19,25 +19,26 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
-import { mockDonations } from '@/lib/mock-data';
+import { useDonations, mockDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getDonationTypeColor } from '@/lib/utils';
 import type { Donation } from '@/lib/types';
 
 export default function DonationsPage() {
+  const allDonations = useDonations(mockDonations);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [donationType, setDonationType] = useState('monetary');
 
-  const filtered = mockDonations.filter(d => {
+  const filtered = allDonations.filter(d => {
     const matchesSearch = `${d.personName || ''} ${d.organizationName || ''} ${d.description} ${d.category}`.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || d.type === typeFilter;
     return matchesSearch && matchesType;
   });
 
-  const totalMonetary = mockDonations.filter(d => d.type === 'monetary').reduce((sum, d) => sum + (d.amount || 0), 0);
-  const totalInKind = mockDonations.filter(d => d.type === 'in-kind').reduce((sum, d) => sum + (d.estimatedValue || 0), 0);
-  const totalHours = mockDonations.filter(d => d.type === 'time').reduce((sum, d) => sum + (d.hours || 0), 0);
+  const totalMonetary = allDonations.filter(d => d.type === 'monetary').reduce((sum, d) => sum + (d.amount || 0), 0);
+  const totalInKind = allDonations.filter(d => d.type === 'in-kind').reduce((sum, d) => sum + (d.estimatedValue || 0), 0);
+  const totalHours = allDonations.filter(d => d.type === 'time').reduce((sum, d) => sum + (d.hours || 0), 0);
 
   const columns = [
     {
@@ -130,21 +131,21 @@ export default function DonationsPage() {
         <StatCard
           title="Monetary Donations"
           value={formatCurrency(totalMonetary)}
-          subtitle={`${mockDonations.filter(d => d.type === 'monetary').length} donation(s)`}
+          subtitle={`${allDonations.filter(d => d.type === 'monetary').length} donation(s)`}
           icon={<DollarSign className="w-5 h-5" />}
           iconColor="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
         />
         <StatCard
           title="In-Kind Donations"
           value={formatCurrency(totalInKind)}
-          subtitle={`${mockDonations.filter(d => d.type === 'in-kind').length} donation(s)`}
+          subtitle={`${allDonations.filter(d => d.type === 'in-kind').length} donation(s)`}
           icon={<Heart className="w-5 h-5" />}
           iconColor="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
         />
         <StatCard
           title="Volunteer Time"
           value={`${totalHours} hours`}
-          subtitle={`${mockDonations.filter(d => d.type === 'time').length} entry(ies)`}
+          subtitle={`${allDonations.filter(d => d.type === 'time').length} entry(ies)`}
           icon={<Clock className="w-5 h-5" />}
           iconColor="bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
         />

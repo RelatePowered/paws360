@@ -22,7 +22,7 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
-import { mockOrganizations, mockPeople, mockDonations } from '@/lib/mock-data';
+import { useOrganizations, usePeople, useDonations, mockOrganizations, mockPeople, mockDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getRoleBadgeColor } from '@/lib/utils';
 import type { Organization } from '@/lib/types';
 
@@ -45,20 +45,23 @@ function getOrgTypeColor(type: string): string {
 }
 
 export default function OrganizationsPage() {
+  const allOrganizations = useOrganizations(mockOrganizations);
+  const allPeople = usePeople(mockPeople);
+  const allDonations = useDonations(mockDonations);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
 
-  const filtered = mockOrganizations.filter(o => {
+  const filtered = allOrganizations.filter(o => {
     const matchesSearch = `${o.name} ${o.contactName} ${o.contactEmail}`.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || o.type === typeFilter;
     return matchesSearch && matchesType;
   });
 
-  const totalCorpDonations = mockOrganizations.reduce((s, o) => s + o.totalDonations, 0);
-  const totalCorpHours = mockOrganizations.reduce((s, o) => s + o.totalVolunteerHours, 0);
-  const matchingOrgs = mockOrganizations.filter(o => o.matchingGiftProgram).length;
+  const totalCorpDonations = allOrganizations.reduce((s, o) => s + o.totalDonations, 0);
+  const totalCorpHours = allOrganizations.reduce((s, o) => s + o.totalVolunteerHours, 0);
+  const matchingOrgs = allOrganizations.filter(o => o.matchingGiftProgram).length;
 
   const columns = [
     {
@@ -144,8 +147,8 @@ export default function OrganizationsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard
           title="Organizations"
-          value={mockOrganizations.length}
-          subtitle={`${mockOrganizations.filter(o => o.isActive).length} active`}
+          value={allOrganizations.length}
+          subtitle={`${allOrganizations.filter(o => o.isActive).length} active`}
           icon={<Building2 className="w-5 h-5" />}
           iconColor="bg-primary/10 text-primary"
         />
@@ -272,8 +275,8 @@ export default function OrganizationsPage() {
       {/* Org Detail Modal */}
       <Modal open={!!selectedOrg} onClose={() => setSelectedOrg(null)} title={selectedOrg?.name || ''} size="lg">
         {selectedOrg && (() => {
-          const members = mockPeople.filter(p => selectedOrg.memberIds.includes(p.id));
-          const orgDonations = mockDonations.filter(d => d.organizationId === selectedOrg.id);
+          const members = allPeople.filter(p => selectedOrg.memberIds.includes(p.id));
+          const orgDonations = allDonations.filter(d => d.organizationId === selectedOrg.id);
           return (
             <div className="space-y-6">
               {/* Header */}
