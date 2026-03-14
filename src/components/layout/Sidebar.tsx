@@ -15,23 +15,25 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import type { AppModule } from '@/lib/types';
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  adminOnly?: boolean;
+  /** Module key used for permission checks. */
+  module: AppModule;
 }
 
 const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'People', href: '/people', icon: Users },
-  { name: 'Animals', href: '/animals', icon: PawPrint },
-  { name: 'Adoptions', href: '/adoptions', icon: Heart },
-  { name: 'Donations', href: '/donations', icon: DollarSign },
-  { name: 'Organizations', href: '/organizations', icon: Building2 },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Admin', href: '/admin', icon: Settings, adminOnly: true },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, module: 'dashboard' },
+  { name: 'People', href: '/people', icon: Users, module: 'people' },
+  { name: 'Animals', href: '/animals', icon: PawPrint, module: 'animals' },
+  { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
+  { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
+  { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },
+  { name: 'Reports', href: '/reports', icon: BarChart3, module: 'reports' },
+  { name: 'Admin', href: '/admin', icon: Settings, module: 'admin' },
 ];
 
 interface SidebarProps {
@@ -41,9 +43,10 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { canView } = useAuth();
 
-  const visibleNav = navigation.filter(item => !item.adminOnly || isAdmin);
+  // Only show nav items the user has at least 'view' permission for
+  const visibleNav = navigation.filter(item => canView(item.module));
 
   return (
     <>

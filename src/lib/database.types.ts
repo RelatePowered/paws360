@@ -38,6 +38,8 @@ export interface Database {
           first_name: string;
           last_name: string;
           role: string;
+          permissions: Record<string, string>;
+          auth_uid: string | null;
           is_active: boolean;
           created_at: string;
           last_login_at: string | null;

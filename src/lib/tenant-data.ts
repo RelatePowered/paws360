@@ -66,9 +66,11 @@ function rowToUser(r: Record<string, unknown>): User {
     firstName: r.first_name as string,
     lastName: r.last_name as string,
     role: r.role as User['role'],
+    permissions: (r.permissions as User['permissions']) ?? {},
     isActive: r.is_active as boolean,
     createdAt: r.created_at as string,
     lastLoginAt: r.last_login_at as string | undefined,
+    authUid: r.auth_uid as string | undefined,
   };
 }
 

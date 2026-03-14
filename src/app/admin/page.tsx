@@ -28,7 +28,9 @@ import type { AdminTag, AlertRule, User, UserRole } from '@/lib/types';
 type AdminTab = 'users' | 'tags' | 'rules';
 
 export default function AdminPage() {
-  const { currentTenant, isAdmin } = useAuth();
+  const { currentTenant, canView: userCanView, canEdit: userCanEdit } = useAuth();
+  const hasAccess = userCanView('admin');
+  const canModify = userCanEdit('admin');
   const tenantId = currentTenant?.id ?? '';
 
   const [tab, setTab] = useState<AdminTab>('users');
@@ -106,6 +108,7 @@ export default function AdminPage() {
       firstName: newFirstName,
       lastName: newLastName,
       role: newRole,
+      permissions: {},
       isActive: true,
       createdAt: new Date().toISOString().split('T')[0],
     };
@@ -176,7 +179,7 @@ export default function AdminPage() {
       header: 'Actions',
       render: (u) => (
         <div className="flex items-center gap-2">
-          {isAdmin && (
+          {canModify && (
             <>
               <select
                 value={u.role}
@@ -200,7 +203,7 @@ export default function AdminPage() {
     },
   ];
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Administration</h1>

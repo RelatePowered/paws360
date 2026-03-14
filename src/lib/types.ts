@@ -15,7 +15,27 @@ export interface Tenant {
   isActive: boolean;
 }
 
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'super_admin' | 'admin' | 'staff';
+
+/** Modules that can be independently granted view/edit access. */
+export type AppModule =
+  | 'dashboard'
+  | 'people'
+  | 'animals'
+  | 'adoptions'
+  | 'donations'
+  | 'organizations'
+  | 'reports'
+  | 'admin';
+
+/** Per-module permission level. */
+export type PermissionLevel = 'none' | 'view' | 'edit';
+
+/**
+ * Map of module → permission level.
+ * Stored as JSONB in the users table; missing keys default to 'none'.
+ */
+export type ModulePermissions = Partial<Record<AppModule, PermissionLevel>>;
 
 export interface User {
   id: string;
@@ -24,9 +44,12 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
+  permissions: ModulePermissions;
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
+  /** Supabase Auth UUID — links this app user to a Supabase auth.users row. */
+  authUid?: string;
 }
 
 // ========== Core Types ==========
