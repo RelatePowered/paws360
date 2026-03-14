@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-interface Column<T> {
+export interface Column<T> {
   key: string;
   header: string;
   render: (item: T) => ReactNode;

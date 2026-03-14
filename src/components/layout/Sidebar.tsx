@@ -11,11 +11,20 @@ import {
   Building2,
   BarChart3,
   Settings,
+  UserCog,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  adminOnly?: boolean;
+}
+
+const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'People', href: '/people', icon: Users },
   { name: 'Animals', href: '/animals', icon: PawPrint },
@@ -23,7 +32,8 @@ const navigation = [
   { name: 'Donations', href: '/donations', icon: DollarSign },
   { name: 'Organizations', href: '/organizations', icon: Building2 },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Admin', href: '/admin', icon: Settings },
+  { name: 'Users', href: '/users', icon: UserCog, adminOnly: true },
+  { name: 'Admin', href: '/admin', icon: Settings, adminOnly: true },
 ];
 
 interface SidebarProps {
@@ -33,6 +43,9 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
+
+  const visibleNav = navigation.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <>
@@ -72,7 +85,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
             return (
               <Link

@@ -1,3 +1,34 @@
+// ========== Multi-Tenancy & User Types ==========
+
+export interface Tenant {
+  id: string;
+  name: string; // e.g., "Springfield Humane Society"
+  slug: string; // URL-friendly identifier
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
+export type UserRole = 'admin' | 'staff';
+
+export interface User {
+  id: string;
+  tenantId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
 // ========== Core Types ==========
 
 export type PersonRole = 'donor' | 'volunteer' | 'adopter' | 'donor-volunteer' | 'donor-adopter' | 'volunteer-adopter' | 'all';
@@ -5,6 +36,7 @@ export type PersonRole = 'donor' | 'volunteer' | 'adopter' | 'donor-volunteer' |
 // Moves Management: tracks how a person's relationship with the shelter evolves
 export interface Move {
   id: string;
+  tenantId: string;
   personId: string;
   fromRoles: string[];
   toRoles: string[];
@@ -14,6 +46,7 @@ export interface Move {
 
 export interface Person {
   id: string;
+  tenantId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -38,6 +71,7 @@ export interface Person {
 
 export interface Organization {
   id: string;
+  tenantId: string;
   name: string;
   type: 'corporation' | 'foundation' | 'nonprofit' | 'small-business' | 'other';
   ein?: string; // Employer Identification Number for tax purposes
@@ -63,6 +97,7 @@ export interface Organization {
 
 export interface TaxLetterRecord {
   id: string;
+  tenantId: string;
   recipientType: 'individual' | 'organization';
   recipientId: string;
   recipientName: string;
@@ -81,6 +116,7 @@ export type DonationType = 'monetary' | 'in-kind' | 'time';
 
 export interface Donation {
   id: string;
+  tenantId: string;
   personId?: string;
   personName?: string;
   organizationId?: string;
@@ -104,6 +140,7 @@ export type AnimalSize = 'small' | 'medium' | 'large' | 'extra-large';
 
 export interface Animal {
   id: string;
+  tenantId: string;
   animalId: string; // Human-readable ID like "DOG-2024-0042"
   name: string;
   species: AnimalSpecies;
@@ -131,6 +168,7 @@ export type AlertSeverity = 'info' | 'warning' | 'critical';
 
 export interface StructuredNote {
   id: string;
+  tenantId: string;
   tagId: string;
   tagLabel: string;
   severity: AlertSeverity;
@@ -140,6 +178,7 @@ export interface StructuredNote {
 
 export interface Adopter {
   id: string;
+  tenantId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -158,6 +197,7 @@ export interface Adopter {
 
 export interface Adoption {
   id: string;
+  tenantId: string;
   animalId: string;
   animalName: string;
   adopterId: string;
@@ -171,6 +211,7 @@ export interface Adoption {
 
 export interface AnimalReturn {
   id: string;
+  tenantId: string;
   adoptionId: string;
   animalId: string;
   animalName: string;
@@ -182,6 +223,7 @@ export interface AnimalReturn {
 
 export interface AdminTag {
   id: string;
+  tenantId: string;
   label: string;
   category: 'person' | 'animal' | 'adopter' | 'donation' | 'alert';
   severity?: AlertSeverity;
@@ -191,6 +233,7 @@ export interface AdminTag {
 
 export interface AlertRule {
   id: string;
+  tenantId: string;
   name: string;
   description: string;
   condition: 'return_count_gte' | 'note_severity' | 'custom';

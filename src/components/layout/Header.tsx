@@ -1,7 +1,10 @@
 'use client';
 
-import { Menu, Sun, Moon, Bell } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Menu, Sun, Moon, Bell, ChevronDown, LogOut } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
+import { mockUsers } from '@/lib/mock-data';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -9,6 +12,24 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
+  const { currentUser, currentTenant, isAdmin, switchUser, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const initials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`
+    : '?';
 
   return (
     <header className="sticky top-0 z-30 bg-surface border-b border-border">
@@ -20,6 +41,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
           >
             <Menu className="w-5 h-5" />
           </button>
+          {/* Tenant name */}
+          {currentTenant && (
+            <span className="hidden sm:block text-sm font-medium text-muted">
+              {currentTenant.name}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -38,9 +65,61 @@ export default function Header({ onMenuClick }: HeaderProps) {
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
 
-          {/* User avatar */}
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium ml-1">
-            A
+          {/* User dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowUserMenu(prev => !prev)}
+              className="flex items-center gap-2 ml-1 p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
+            >
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                {initials}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium leading-tight">
+                  {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Not logged in'}
+                </p>
+                <p className="text-xs text-muted leading-tight">
+                  {isAdmin ? 'Admin' : 'Staff'}
+                </p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-muted hidden sm:block" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-1 w-64 bg-surface border border-border rounded-lg shadow-lg z-50">
+                <div className="p-3 border-b border-border">
+                  <p className="text-xs text-muted uppercase tracking-wider">Switch User (Demo)</p>
+                </div>
+                <div className="p-1">
+                  {mockUsers.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => { switchUser(u.id); setShowUserMenu(false); }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-surface-hover transition-colors flex items-center justify-between ${
+                        currentUser?.id === u.id ? 'bg-primary/10 text-primary' : ''
+                      }`}
+                    >
+                      <div>
+                        <p className="font-medium">{u.firstName} {u.lastName}</p>
+                        <p className="text-xs text-muted">{u.role} &middot; {u.email}</p>
+                      </div>
+                      {currentUser?.id === u.id && (
+                        <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">Current</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-border p-1">
+                  <button
+                    onClick={() => { logout(); setShowUserMenu(false); }}
+                    className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-surface-hover text-danger flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
