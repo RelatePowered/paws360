@@ -18,19 +18,6 @@ import {
 export const mockTenants: Tenant[] = [
   {
     id: 'tenant-1',
-    name: 'Springfield Humane Society',
-    slug: 'springfield-hs',
-    address: '500 Animal Shelter Rd',
-    city: 'Springfield',
-    state: 'IL',
-    zip: '62701',
-    phone: '(555) 000-1234',
-    email: 'info@springfieldhumane.org',
-    createdAt: '2024-01-01',
-    isActive: true,
-  },
-  {
-    id: 'tenant-2',
     name: 'Dickson County Humane Society',
     slug: 'dickson-county-hs',
     address: '410 Eno Rd',
@@ -39,6 +26,19 @@ export const mockTenants: Tenant[] = [
     zip: '37055',
     phone: '(615) 446-7867',
     email: 'info@dicksonhumane.org',
+    createdAt: '2024-01-01',
+    isActive: true,
+  },
+  {
+    id: 'tenant-2',
+    name: 'Springfield Humane Society',
+    slug: 'springfield-hs',
+    address: '500 Animal Shelter Rd',
+    city: 'Springfield',
+    state: 'IL',
+    zip: '62701',
+    phone: '(555) 000-1234',
+    email: 'info@springfieldhumane.org',
     createdAt: '2024-06-01',
     isActive: true,
   },
@@ -50,7 +50,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'admin@springfieldhumane.org',
+    email: 'admin@dicksonhumane.org',
     firstName: 'Alice',
     lastName: 'Admin',
     role: 'admin',
@@ -61,7 +61,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-2',
     tenantId: 'tenant-1',
-    email: 'staff@springfieldhumane.org',
+    email: 'staff@dicksonhumane.org',
     firstName: 'Bob',
     lastName: 'Staff',
     role: 'staff',
@@ -72,7 +72,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-3',
     tenantId: 'tenant-2',
-    email: 'admin@dicksonhumane.org',
+    email: 'admin@springfieldhumane.org',
     firstName: 'Carol',
     lastName: 'Director',
     role: 'admin',
@@ -118,7 +118,7 @@ export const mockAlertRules: AlertRule[] = [
 export const mockPeople: Person[] = [
   {
     id: 'p-1', tenantId: T1, firstName: 'Sarah', lastName: 'Johnson', email: 'sarah.j@email.com', phone: '(555) 123-4567',
-    address: '123 Oak St', city: 'Springfield', state: 'IL', zip: '62701',
+    address: '123 Oak St', city: 'Dickson', state: 'TN', zip: '37055',
     roles: ['donor', 'volunteer', 'adopter'],
     moves: [
       { id: 'm-1a', tenantId: T1, personId: 'p-1', fromRoles: [], toRoles: ['donor'], date: '2024-01-10', trigger: 'First donation — $500 to General Fund' },
@@ -130,7 +130,7 @@ export const mockPeople: Person[] = [
   },
   {
     id: 'p-2', tenantId: T1, firstName: 'Michael', lastName: 'Chen', email: 'mchen@email.com', phone: '(555) 234-5678',
-    address: '456 Maple Ave', city: 'Springfield', state: 'IL', zip: '62702',
+    address: '456 Maple Ave', city: 'Dickson', state: 'TN', zip: '37055',
     roles: ['donor'],
     organizationId: 'org-1', organizationName: 'Chen Technologies',
     moves: [
@@ -141,9 +141,9 @@ export const mockPeople: Person[] = [
   },
   {
     id: 'p-3', tenantId: T1, firstName: 'Emily', lastName: 'Rodriguez', email: 'emily.r@email.com', phone: '(555) 345-6789',
-    address: '789 Pine Rd', city: 'Springfield', state: 'IL', zip: '62703',
+    address: '789 Pine Rd', city: 'Dickson', state: 'TN', zip: '37055',
     roles: ['volunteer'],
-    organizationId: 'org-2', organizationName: 'Springfield Community Bank',
+    organizationId: 'org-2', organizationName: 'Dickson County Community Bank',
     moves: [
       { id: 'm-3a', tenantId: T1, personId: 'p-3', fromRoles: [], toRoles: ['volunteer'], date: '2024-03-05', trigger: 'Signed up for dog walking shifts' },
       { id: 'm-3b', tenantId: T1, personId: 'p-3', fromRoles: ['volunteer'], toRoles: ['volunteer', 'donor'], date: '2024-05-10', trigger: 'First donation — $350 after 2 months volunteering' },
@@ -225,16 +225,16 @@ export const mockOrganizations: Organization[] = [
   {
     id: 'org-1', tenantId: T1, name: 'Chen Technologies', type: 'corporation',
     ein: '36-1234567', contactName: 'Michael Chen', contactEmail: 'mchen@chentech.com', contactPhone: '(555) 234-5678',
-    address: '100 Tech Parkway', city: 'Springfield', state: 'IL', zip: '62702',
+    address: '100 Tech Parkway', city: 'Dickson', state: 'TN', zip: '37055',
     memberIds: ['p-2'], roles: ['donor', 'sponsor'],
     totalDonations: 25000, totalVolunteerHours: 0,
     matchingGiftProgram: true, matchRatio: 1.0,
     tags: ['Major Donor', 'Corporate Sponsor'], createdAt: '2024-02-15', updatedAt: '2024-10-20', isActive: true,
   },
   {
-    id: 'org-2', tenantId: T1, name: 'Springfield Community Bank', type: 'corporation',
+    id: 'org-2', tenantId: T1, name: 'Dickson County Community Bank', type: 'corporation',
     ein: '36-9876543', contactName: 'David Park', contactEmail: 'dpark@scbank.com', contactPhone: '(555) 444-5555',
-    address: '200 Main St', city: 'Springfield', state: 'IL', zip: '62701',
+    address: '200 Main St', city: 'Dickson', state: 'TN', zip: '37055',
     memberIds: ['p-3'], roles: ['donor', 'volunteer'],
     totalDonations: 10000, totalVolunteerHours: 80,
     matchingGiftProgram: true, matchRatio: 0.5,
@@ -243,16 +243,16 @@ export const mockOrganizations: Organization[] = [
   {
     id: 'org-3', tenantId: T1, name: 'Paws & Claws Pet Supply', type: 'small-business',
     ein: '36-5555555', contactName: 'Karen Wright', contactEmail: 'karen@pawsclaws.com', contactPhone: '(555) 666-7777',
-    address: '50 Commerce Dr', city: 'Springfield', state: 'IL', zip: '62703',
+    address: '50 Commerce Dr', city: 'Dickson', state: 'TN', zip: '37055',
     memberIds: [], roles: ['donor'],
     totalDonations: 3200, totalVolunteerHours: 0,
     matchingGiftProgram: false,
     tags: [], createdAt: '2024-03-20', updatedAt: '2024-09-30', isActive: true,
   },
   {
-    id: 'org-4', tenantId: T1, name: 'Heart of Illinois Foundation', type: 'foundation',
+    id: 'org-4', tenantId: T1, name: 'Heart of Tennessee Foundation', type: 'foundation',
     ein: '36-7777777', contactName: 'Robert Hall', contactEmail: 'rhall@hoif.org', contactPhone: '(555) 888-9999',
-    address: '300 Philanthropy Ln', city: 'Springfield', state: 'IL', zip: '62704',
+    address: '300 Philanthropy Ln', city: 'Dickson', state: 'TN', zip: '37055',
     memberIds: [], roles: ['donor'],
     totalDonations: 50000, totalVolunteerHours: 0,
     matchingGiftProgram: false,
@@ -266,14 +266,14 @@ export const mockDonations: Donation[] = [
   { id: 'd-1', tenantId: T1, personId: 'p-1', personName: 'Sarah Johnson', type: 'monetary', amount: 2500, description: 'Annual fund donation', date: '2024-10-01', category: 'General Fund', receiptIssued: true },
   { id: 'd-2', tenantId: T1, personId: 'p-2', personName: 'Michael Chen', organizationId: 'org-1', organizationName: 'Chen Technologies', type: 'monetary', amount: 5000, description: 'Building renovation fund', date: '2024-10-05', category: 'Capital Campaign', receiptIssued: true },
   { id: 'd-3', tenantId: T1, personId: 'p-1', personName: 'Sarah Johnson', type: 'time', hours: 8, description: 'Weekend adoption event', date: '2024-10-12', category: 'Events', receiptIssued: false },
-  { id: 'd-4', tenantId: T1, personId: 'p-3', personName: 'Emily Rodriguez', organizationId: 'org-2', organizationName: 'Springfield Community Bank', type: 'time', hours: 16, description: 'Dog walking and socialization', date: '2024-10-15', category: 'Animal Care', receiptIssued: false },
+  { id: 'd-4', tenantId: T1, personId: 'p-3', personName: 'Emily Rodriguez', organizationId: 'org-2', organizationName: 'Dickson County Community Bank', type: 'time', hours: 16, description: 'Dog walking and socialization', date: '2024-10-15', category: 'Animal Care', receiptIssued: false },
   { id: 'd-5', tenantId: T1, personId: 'p-4', personName: 'James Williams', type: 'in-kind', itemDescription: '50 lbs premium dog food', estimatedValue: 120, description: 'Pet food donation', date: '2024-10-18', category: 'Supplies', receiptIssued: true },
   { id: 'd-6', tenantId: T1, organizationId: 'org-1', organizationName: 'Chen Technologies', type: 'monetary', amount: 7500, description: 'Corporate matching gift — year end', date: '2024-10-20', category: 'General Fund', receiptIssued: true },
   { id: 'd-7', tenantId: T1, personId: 'p-5', personName: 'Lisa Park', type: 'time', hours: 24, description: 'Front desk and phone support', date: '2024-10-22', category: 'Administration', receiptIssued: false },
   { id: 'd-8', tenantId: T1, personId: 'p-1', personName: 'Sarah Johnson', type: 'in-kind', itemDescription: 'Blankets and towels (20 items)', estimatedValue: 200, description: 'Comfort supplies', date: '2024-10-25', category: 'Supplies', receiptIssued: true },
   { id: 'd-9', tenantId: T1, organizationId: 'org-3', organizationName: 'Paws & Claws Pet Supply', type: 'in-kind', itemDescription: 'Pet food and toys (bulk)', estimatedValue: 1800, description: 'Quarterly supply donation', date: '2024-10-28', category: 'Supplies', receiptIssued: true },
-  { id: 'd-10', tenantId: T1, organizationId: 'org-4', organizationName: 'Heart of Illinois Foundation', type: 'monetary', amount: 25000, description: 'Annual operating grant', date: '2024-07-01', category: 'General Fund', receiptIssued: true },
-  { id: 'd-11', tenantId: T1, organizationId: 'org-2', organizationName: 'Springfield Community Bank', type: 'monetary', amount: 10000, description: 'Shelter renovation sponsorship', date: '2024-09-15', category: 'Capital Campaign', receiptIssued: true },
+  { id: 'd-10', tenantId: T1, organizationId: 'org-4', organizationName: 'Heart of Tennessee Foundation', type: 'monetary', amount: 25000, description: 'Annual operating grant', date: '2024-07-01', category: 'General Fund', receiptIssued: true },
+  { id: 'd-11', tenantId: T1, organizationId: 'org-2', organizationName: 'Dickson County Community Bank', type: 'monetary', amount: 10000, description: 'Shelter renovation sponsorship', date: '2024-09-15', category: 'Capital Campaign', receiptIssued: true },
 ];
 
 // ========== Adopters ==========
@@ -281,7 +281,7 @@ export const mockDonations: Donation[] = [
 export const mockAdopters: Adopter[] = [
   {
     id: 'ad-1', tenantId: T1, firstName: 'Rachel', lastName: 'Green', email: 'rgreen@email.com', phone: '(555) 678-9012',
-    address: '100 Central Park W', city: 'Springfield', state: 'IL', zip: '62704',
+    address: '100 Church St', city: 'Dickson', state: 'TN', zip: '37055',
     structuredNotes: [
       { id: 'sn-1', tenantId: T1, tagId: 'tag-5', tagLabel: 'Excellent Adopter', severity: 'info', date: '2024-08-01', addedBy: 'Admin' },
     ],
@@ -290,7 +290,7 @@ export const mockAdopters: Adopter[] = [
   },
   {
     id: 'ad-2', tenantId: T1, firstName: 'Tom', lastName: 'Baker', email: 'tbaker@email.com', phone: '(555) 789-0123',
-    address: '200 Elm St', city: 'Springfield', state: 'IL', zip: '62705',
+    address: '200 Elm St', city: 'Dickson', state: 'TN', zip: '37055',
     structuredNotes: [
       { id: 'sn-2', tenantId: T1, tagId: 'tag-1', tagLabel: 'Repeat Returner', severity: 'critical', date: '2024-09-20', addedBy: 'Admin' },
       { id: 'sn-3', tenantId: T1, tagId: 'tag-3', tagLabel: 'Behavioral Issues Reported', severity: 'warning', date: '2024-09-20', addedBy: 'Admin' },
