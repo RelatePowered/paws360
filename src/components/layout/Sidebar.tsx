@@ -11,7 +11,6 @@ import {
   Building2,
   BarChart3,
   Settings,
-  UserCog,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,7 +31,6 @@ const navigation: NavItem[] = [
   { name: 'Donations', href: '/donations', icon: DollarSign },
   { name: 'Organizations', href: '/organizations', icon: Building2 },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Users', href: '/users', icon: UserCog, adminOnly: true },
   { name: 'Admin', href: '/admin', icon: Settings, adminOnly: true },
 ];
 
