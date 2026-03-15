@@ -9,6 +9,7 @@ import {
   Weight,
   Calendar,
   Cpu,
+  Camera,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -16,17 +17,22 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
+import AnimalPhoto from '@/components/ui/AnimalPhoto';
+import PhotoUpload from '@/components/ui/PhotoUpload';
 import { useAnimals, mockAnimals } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
 import type { Animal } from '@/lib/types';
 
 export default function AnimalsPage() {
   const allAnimals = useAnimals(mockAnimals);
+  const { currentUser } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [speciesFilter, setSpeciesFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
+  const [newAnimalPhotoKey, setNewAnimalPhotoKey] = useState<string | null>(null);
 
   const filtered = allAnimals.filter(a => {
     const matchesSearch = `${a.name} ${a.animalId} ${a.breed}`.toLowerCase().includes(search.toLowerCase());
@@ -48,9 +54,7 @@ export default function AnimalsPage() {
       header: 'Animal',
       render: (a: Animal) => (
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
-            <PawPrint className="w-4 h-4" />
-          </div>
+          <AnimalPhoto photoKey={a.photoUrl} alt={a.name} size="sm" />
           <div>
             <p className="font-medium">{a.name}</p>
             <p className="text-xs text-muted">{a.breed}</p>
@@ -229,6 +233,14 @@ export default function AnimalsPage() {
           <FormField label="Intake Person (if surrender/drop-off)">
             <Input placeholder="Search person by name..." />
           </FormField>
+          <div>
+            <label className="block text-sm font-medium mb-1">Photo</label>
+            <PhotoUpload
+              tenantId={currentUser?.tenantId ?? ''}
+              animalId="new"
+              onUploaded={(key) => setNewAnimalPhotoKey(key)}
+            />
+          </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
             <Button type="submit">Complete Intake</Button>
@@ -242,9 +254,7 @@ export default function AnimalsPage() {
           <div className="space-y-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                  <PawPrint className="w-8 h-8" />
-                </div>
+                <AnimalPhoto photoKey={selectedAnimal.photoUrl} alt={selectedAnimal.name} size="md" />
                 <div>
                   <h3 className="text-lg font-bold">{selectedAnimal.name}</h3>
                   <p className="text-sm font-mono text-muted">{selectedAnimal.animalId}</p>
@@ -326,6 +336,21 @@ export default function AnimalsPage() {
                 </div>
               </div>
             )}
+
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Camera className="w-4 h-4" /> Photo
+              </h4>
+              <PhotoUpload
+                tenantId={currentUser?.tenantId ?? ''}
+                animalId={selectedAnimal.id}
+                currentPhotoKey={selectedAnimal.photoUrl}
+                onUploaded={(key) => {
+                  // In a real app this would persist to DB
+                  setSelectedAnimal({ ...selectedAnimal, photoUrl: key });
+                }}
+              />
+            </div>
           </div>
         )}
       </Modal>

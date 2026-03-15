@@ -12,6 +12,7 @@ import {
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import AnimalPhoto from '@/components/ui/AnimalPhoto';
 import { useDashboardStats, useAnimals, useDonations, useAdopters, mockDashboardStats, mockAnimals, mockDonations, mockAdopters } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
 import Link from 'next/link';
@@ -155,12 +156,15 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {animals.filter(a => a.status === 'available').map(animal => (
               <div key={animal.id} className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-medium">{animal.name}</p>
-                    <p className="text-xs text-muted">{animal.animalId}</p>
+                <div className="flex items-start gap-3 mb-2">
+                  <AnimalPhoto photoKey={animal.photoUrl} alt={animal.name} size="sm" />
+                  <div className="flex-1 flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{animal.name}</p>
+                      <p className="text-xs text-muted">{animal.animalId}</p>
+                    </div>
+                    <Badge className={getStatusBadgeColor(animal.status)}>{animal.status}</Badge>
                   </div>
-                  <Badge className={getStatusBadgeColor(animal.status)}>{animal.status}</Badge>
                 </div>
                 <div className="space-y-1 text-sm text-muted">
                   <p>{animal.breed} &middot; {animal.color}</p>
