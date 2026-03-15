@@ -19,6 +19,7 @@ import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import AnimalPhoto from '@/components/ui/AnimalPhoto';
 import PhotoUpload from '@/components/ui/PhotoUpload';
+import SocialPostPanel from '@/components/ui/SocialPostPanel';
 import { useAnimals, mockAnimals } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
@@ -26,7 +27,7 @@ import type { Animal } from '@/lib/types';
 
 export default function AnimalsPage() {
   const allAnimals = useAnimals(mockAnimals);
-  const { currentUser } = useAuth();
+  const { currentUser, currentTenant } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [speciesFilter, setSpeciesFilter] = useState('all');
@@ -351,6 +352,11 @@ export default function AnimalsPage() {
                 }}
               />
             </div>
+
+            <SocialPostPanel
+              animal={selectedAnimal}
+              shelterName={currentTenant?.name ?? 'Our Shelter'}
+            />
           </div>
         )}
       </Modal>
