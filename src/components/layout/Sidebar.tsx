@@ -11,6 +11,7 @@ import {
   Building2,
   BarChart3,
   Settings,
+  Share2,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ const navigation: NavItem[] = [
   { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
   { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
   { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },
+  { name: 'Social Media', href: '/social', icon: Share2, module: 'animals' },
   { name: 'Reports', href: '/reports', icon: BarChart3, module: 'reports' },
   { name: 'Admin', href: '/admin', icon: Settings, module: 'admin' },
 ];
