@@ -19,6 +19,7 @@ import type {
   FosterHome,
   FosterPlacement,
   KennelLocation,
+  AdoptionApplication,
 } from '@/lib/types';
 
 // Re-export mock data so pages can still use it for initial renders
@@ -38,6 +39,7 @@ export {
   mockFosterHomes,
   mockFosterPlacements,
   mockKennelLocations,
+  mockAdoptionApplications,
 } from '@/lib/mock-data';
 
 /**
@@ -123,6 +125,10 @@ export function useFosterPlacements(fallback: FosterPlacement[] = []) {
 
 export function useKennelLocations(fallback: KennelLocation[] = []) {
   return useFetch(td.getKennelLocations, fallback);
+}
+
+export function useAdoptionApplications(fallback: AdoptionApplication[] = []) {
+  return useFetch(td.getAdoptionApplications, fallback);
 }
 
 export function useTaxLetters(year: number, fallback: TaxLetterRecord[] = []) {

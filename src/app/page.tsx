@@ -11,12 +11,13 @@ import {
   Shield,
   Home,
   Calendar,
+  Syringe,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import AnimalPhoto from '@/components/ui/AnimalPhoto';
-import { useDashboardStats, useAnimals, useDonations, useAdopters, mockDashboardStats, mockAnimals, mockDonations, mockAdopters } from '@/hooks/useTenantData';
+import { useDashboardStats, useAnimals, useDonations, useAdopters, useMedicalRecords, mockDashboardStats, mockAnimals, mockDonations, mockAdopters, mockMedicalRecords } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getStatusBadgeColor, getSeverityColor } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -25,6 +26,22 @@ export default function DashboardPage() {
   const animals = useAnimals(mockAnimals);
   const donations = useDonations(mockDonations);
   const adopters = useAdopters(mockAdopters);
+  const medicalRecords = useMedicalRecords(mockMedicalRecords);
+
+  // Vaccination alerts: records with nextDueDate within 30 days or overdue
+  const today = new Date();
+  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const vaccinationAlerts = medicalRecords
+    .filter(r => r.type === 'vaccination' && r.nextDueDate)
+    .map(r => {
+      const dueDate = new Date(r.nextDueDate!);
+      const animal = animals.find(a => a.id === r.animalId);
+      const isOverdue = dueDate < today;
+      const isDueSoon = dueDate <= thirtyDaysFromNow && dueDate >= today;
+      return { record: r, animal, dueDate, isOverdue, isDueSoon };
+    })
+    .filter(v => v.isOverdue || v.isDueSoon)
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 
   return (
     <div className="space-y-6">
@@ -143,6 +160,53 @@ export default function DashboardPage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Vaccination Alerts */}
+      {vaccinationAlerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Syringe className="w-5 h-5 text-warning" />
+                <h2 className="font-semibold">Vaccination Alerts</h2>
+                <Badge className="bg-warning/10 text-warning">{vaccinationAlerts.length}</Badge>
+              </div>
+              <Link href="/animals" className="text-sm text-primary hover:underline">View animals</Link>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-2">
+              {vaccinationAlerts.slice(0, 8).map(({ record, animal, dueDate, isOverdue }) => (
+                <div
+                  key={record.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    isOverdue
+                      ? 'bg-danger/5 border-danger/20'
+                      : 'bg-warning/5 border-warning/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Syringe className={`w-4 h-4 ${isOverdue ? 'text-danger' : 'text-warning'}`} />
+                    <div>
+                      <p className="text-sm font-medium">{animal?.name ?? 'Unknown'}</p>
+                      <p className="text-xs text-muted">{record.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge className={isOverdue
+                      ? 'bg-danger/10 text-danger'
+                      : 'bg-warning/10 text-warning'
+                    }>
+                      {isOverdue ? 'Overdue' : 'Due Soon'}
+                    </Badge>
+                    <p className="text-xs text-muted mt-1">{formatDate(record.nextDueDate!)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Available Animals */}
       <Card>

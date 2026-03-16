@@ -15,6 +15,7 @@ import {
   X,
   Home,
   MapPin,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -37,6 +38,7 @@ const navigation: NavItem[] = [
   { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
   { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
   { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },
+  { name: 'Publish Animals', href: '/animals/export', icon: Globe, module: 'animals' },
   { name: 'Social Media', href: '/social', icon: Share2, module: 'animals' },
   { name: 'Reports', href: '/reports', icon: BarChart3, module: 'reports' },
   { name: 'Admin', href: '/admin', icon: Settings, module: 'admin' },

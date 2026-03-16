@@ -23,6 +23,7 @@ import {
   mockFosterHomes,
   mockFosterPlacements,
   mockKennelLocations,
+  mockAdoptionApplications,
 } from './mock-data';
 import type {
   Person,
@@ -44,6 +45,7 @@ import type {
   FosterHome,
   FosterPlacement,
   KennelLocation,
+  AdoptionApplication,
 } from './types';
 
 // ========== Row → App-type mappers ==========
@@ -535,6 +537,44 @@ export async function getFosterPlacements(tenantId: string): Promise<FosterPlace
   if (!sb) return mockFosterPlacements.filter(p => p.tenantId === tenantId);
   const { data } = await sb.from('foster_placements').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToFosterPlacement(r as Record<string, unknown>));
+}
+
+export async function getAdoptionApplications(tenantId: string): Promise<AdoptionApplication[]> {
+  const sb = getSupabase();
+  if (!sb) return mockAdoptionApplications.filter(a => a.tenantId === tenantId);
+  const { data } = await sb.from('adoption_applications').select('*').eq('tenant_id', tenantId);
+  return (data ?? []).map(r => {
+    const row = r as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      tenantId: row.tenant_id as string,
+      animalId: row.animal_id as string,
+      animalName: row.animal_name as string,
+      applicantName: row.applicant_name as string,
+      applicantEmail: row.applicant_email as string,
+      applicantPhone: row.applicant_phone as string,
+      address: row.address as string | undefined,
+      city: row.city as string | undefined,
+      state: row.state as string | undefined,
+      zip: row.zip as string | undefined,
+      householdType: row.household_type as AdoptionApplication['householdType'],
+      hasYard: row.has_yard as boolean,
+      hasFence: row.has_fence as boolean,
+      otherPets: row.other_pets as string,
+      otherPetsDetails: row.other_pets_details as string | undefined,
+      hasChildren: row.has_children as boolean,
+      childrenAges: row.children_ages as string | undefined,
+      experience: row.experience as string,
+      veterinarianName: row.veterinarian_name as string | undefined,
+      veterinarianPhone: row.veterinarian_phone as string | undefined,
+      reasonForAdopting: row.reason_for_adopting as string,
+      status: row.status as AdoptionApplication['status'],
+      reviewNotes: row.review_notes as string | undefined,
+      reviewedBy: row.reviewed_by as string | undefined,
+      submittedAt: row.submitted_at as string,
+      reviewedAt: row.reviewed_at as string | undefined,
+    };
+  });
 }
 
 export async function getKennelLocations(tenantId: string): Promise<KennelLocation[]> {

@@ -15,6 +15,7 @@ import {
   FosterHome,
   FosterPlacement,
   KennelLocation,
+  AdoptionApplication,
 } from './types';
 
 // ========== Tenants ==========
@@ -481,6 +482,57 @@ export const mockKennelLocations: KennelLocation[] = [
   { id: 'k-12', tenantId: T1, name: 'C-204', zone: 'Cat Room', species: 'cat', size: 'medium', isOccupied: false },
   { id: 'k-13', tenantId: T1, name: 'C-205', zone: 'Cat Isolation', species: 'cat', size: 'medium', isOccupied: true, currentAnimalId: 'a-4', currentAnimalName: 'Oliver', notes: 'Medical hold — dental eval pending' },
   { id: 'k-14', tenantId: T1, name: 'C-206', zone: 'Cat Isolation', species: 'cat', size: 'small', isOccupied: false },
+];
+
+// ========== Adoption Applications ==========
+
+export const mockAdoptionApplications: AdoptionApplication[] = [
+  {
+    id: 'app-1', tenantId: T1, animalId: 'a-1', animalName: 'Buddy',
+    applicantName: 'Jennifer Martinez', applicantEmail: 'jmartinez@email.com', applicantPhone: '(555) 111-2222',
+    address: '400 Birch Lane', city: 'Dickson', state: 'TN', zip: '37055',
+    householdType: 'house', hasYard: true, hasFence: true,
+    otherPets: 'One cat, indoor only', hasChildren: true, childrenAges: '8, 12',
+    experience: 'Have owned dogs my whole life. Previous golden retriever lived to 14.',
+    veterinarianName: 'Dr. Sarah Martinez', veterinarianPhone: '(555) 333-4444',
+    reasonForAdopting: 'Looking for a family dog. Kids are ready for the responsibility. We have a large fenced yard.',
+    status: 'approved', reviewNotes: 'Excellent candidate. Vet reference checked out.', reviewedBy: 'Alice Admin',
+    submittedAt: '2024-10-20', reviewedAt: '2024-10-22',
+  },
+  {
+    id: 'app-2', tenantId: T1, animalId: 'a-3', animalName: 'Luna',
+    applicantName: 'Kevin Park', applicantEmail: 'kpark@email.com', applicantPhone: '(555) 555-6666',
+    address: '250 Cedar St', city: 'Dickson', state: 'TN', zip: '37055',
+    householdType: 'apartment', hasYard: false, hasFence: false,
+    otherPets: 'None', hasChildren: false,
+    experience: 'First time dog owner, but have been researching breeds extensively.',
+    reasonForAdopting: 'I work from home and want a companion. I run daily and need an active dog.',
+    status: 'under-review',
+    submittedAt: '2024-10-25',
+  },
+  {
+    id: 'app-3', tenantId: T1, animalId: 'a-1', animalName: 'Buddy',
+    applicantName: 'Tom Baker', applicantEmail: 'tbaker@email.com', applicantPhone: '(555) 789-0123',
+    address: '200 Elm St', city: 'Dickson', state: 'TN', zip: '37055',
+    householdType: 'house', hasYard: true, hasFence: false,
+    otherPets: 'None currently', hasChildren: false,
+    experience: 'Have had several dogs but they were returned to the shelter.',
+    reasonForAdopting: 'Want to try again with a calmer breed.',
+    status: 'denied', reviewNotes: 'Applicant is flagged as repeat returner (ad-2). Two previous returns for behavioral issues.', reviewedBy: 'Alice Admin',
+    submittedAt: '2024-10-18', reviewedAt: '2024-10-19',
+  },
+  {
+    id: 'app-4', tenantId: T1, animalId: 'a-3', animalName: 'Luna',
+    applicantName: 'Sarah Williams', applicantEmail: 'swilliams@email.com', applicantPhone: '(555) 777-8888',
+    address: '120 Oak Court', city: 'Dickson', state: 'TN', zip: '37055',
+    householdType: 'house', hasYard: true, hasFence: true,
+    otherPets: 'One senior dog, friendly with other dogs', hasChildren: true, childrenAges: '5',
+    experience: 'Lifelong dog owner. Currently have a 10-year-old lab.',
+    veterinarianName: 'Dr. James Wilson', veterinarianPhone: '(555) 999-0000',
+    reasonForAdopting: 'Our senior dog could use a companion, and Luna seems like a great fit for our active family.',
+    status: 'submitted',
+    submittedAt: '2024-10-27',
+  },
 ];
 
 // Helper to build tax letter records from donations (legacy — prefer buildTenantTaxLetters in tenant-data.ts)

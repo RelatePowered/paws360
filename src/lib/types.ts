@@ -319,6 +319,42 @@ export interface Adoption {
   status: 'completed' | 'pending' | 'returned';
   returnDate?: string;
   returnReason?: string;
+  /** Donation collected at point of adoption */
+  checkoutDonation?: number;
+}
+
+// ========== Adoption Applications ==========
+
+export type ApplicationStatus = 'submitted' | 'under-review' | 'approved' | 'denied' | 'withdrawn';
+
+export interface AdoptionApplication {
+  id: string;
+  tenantId: string;
+  animalId: string;
+  animalName: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  householdType: 'house' | 'apartment' | 'condo' | 'other';
+  hasYard: boolean;
+  hasFence: boolean;
+  otherPets: string;
+  otherPetsDetails?: string;
+  hasChildren: boolean;
+  childrenAges?: string;
+  experience: string;
+  veterinarianName?: string;
+  veterinarianPhone?: string;
+  reasonForAdopting: string;
+  status: ApplicationStatus;
+  reviewNotes?: string;
+  reviewedBy?: string;
+  submittedAt: string;
+  reviewedAt?: string;
 }
 
 export interface AnimalReturn {
