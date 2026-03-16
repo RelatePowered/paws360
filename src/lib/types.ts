@@ -26,7 +26,9 @@ export type AppModule =
   | 'donations'
   | 'organizations'
   | 'reports'
-  | 'admin';
+  | 'admin'
+  | 'foster'
+  | 'kennels';
 
 /** Per-module permission level. */
 export type PermissionLevel = 'none' | 'view' | 'edit';
@@ -157,9 +159,18 @@ export interface Donation {
 }
 
 export type AnimalSpecies = 'dog' | 'cat' | 'bird' | 'rabbit' | 'other';
-export type AnimalStatus = 'intake' | 'available' | 'adopted' | 'foster' | 'medical-hold' | 'transferred' | 'deceased';
+export type AnimalStatus = 'intake' | 'available' | 'adopted' | 'foster' | 'medical-hold' | 'transferred' | 'deceased' | 'euthanized';
 export type AnimalGender = 'male' | 'female' | 'unknown';
 export type AnimalSize = 'small' | 'medium' | 'large' | 'extra-large';
+
+/** Asilomar Accords intake condition classification */
+export type AsilomarCondition = 'healthy' | 'treatable-rehabilitable' | 'treatable-manageable' | 'unhealthy-untreatable';
+
+/** SAC age group classification */
+export type SacAgeGroup = 'neonate' | 'weaned' | 'juvenile' | 'adult' | 'senior';
+
+/** Outcome type for SAC reporting */
+export type OutcomeType = 'adoption' | 'return-to-owner' | 'transfer-out' | 'euthanasia-owner-request' | 'euthanasia-shelter' | 'died-in-care' | 'missing' | 'other';
 
 export interface Animal {
   id: string;
@@ -172,19 +183,97 @@ export interface Animal {
   gender: AnimalGender;
   size: AnimalSize;
   age?: string;
+  dateOfBirth?: string;
   weight?: number;
   microchipId?: string;
   status: AnimalStatus;
   intakeDate: string;
   intakeType: 'stray' | 'surrender' | 'transfer' | 'return' | 'confiscation';
+  intakeCondition: AsilomarCondition;
   intakePersonId?: string;
   intakePersonName?: string;
+  alteredStatus: 'intact' | 'spayed' | 'neutered' | 'unknown';
   description: string;
   medicalNotes: string[];
   tags: string[];
   photoUrl?: string;
+  kennelLocation?: string;
+  holdExpirationDate?: string;
+  outcomeType?: OutcomeType;
+  outcomeDate?: string;
+  fosterHomeId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ========== Medical Records ==========
+
+export type MedicalRecordType = 'vaccination' | 'surgery' | 'treatment' | 'exam' | 'medication' | 'test';
+
+export interface MedicalRecord {
+  id: string;
+  tenantId: string;
+  animalId: string;
+  type: MedicalRecordType;
+  description: string;
+  date: string;
+  veterinarian?: string;
+  notes?: string;
+  nextDueDate?: string;
+  createdAt: string;
+}
+
+// ========== Foster Management ==========
+
+export interface FosterHome {
+  id: string;
+  tenantId: string;
+  personId?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  capacity: number;
+  currentCount: number;
+  speciesPreference: AnimalSpecies[];
+  sizePreference: AnimalSize[];
+  isActive: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FosterPlacement {
+  id: string;
+  tenantId: string;
+  animalId: string;
+  animalName: string;
+  fosterHomeId: string;
+  fosterName: string;
+  startDate: string;
+  endDate?: string;
+  status: 'active' | 'completed' | 'foster-to-adopt';
+  notes?: string;
+  createdAt: string;
+}
+
+// ========== Kennel Management ==========
+
+export interface KennelLocation {
+  id: string;
+  tenantId: string;
+  name: string;
+  zone: string;
+  species: AnimalSpecies;
+  size: AnimalSize;
+  isOccupied: boolean;
+  currentAnimalId?: string;
+  currentAnimalName?: string;
+  notes?: string;
 }
 
 export type AlertSeverity = 'info' | 'warning' | 'critical';
@@ -277,4 +366,38 @@ export interface DashboardStats {
   donationsThisMonth: number;
   volunteerHoursThisMonth: number;
   flaggedAdopters: number;
+  animalsInFoster: number;
+  liveReleaseRate: number;
+  averageLengthOfStay: number;
+}
+
+// ========== SAC Reporting ==========
+
+export interface SacReportRow {
+  species: AnimalSpecies;
+  intakeStray: number;
+  intakeSurrender: number;
+  intakeTransfer: number;
+  intakeOther: number;
+  intakeTotal: number;
+  outcomeAdoption: number;
+  outcomeReturnToOwner: number;
+  outcomeTransferOut: number;
+  outcomeEuthanasia: number;
+  outcomeDiedInCare: number;
+  outcomeOther: number;
+  outcomeTotal: number;
+}
+
+export interface AsilomarStats {
+  healthyIntake: number;
+  treatableRehabIntake: number;
+  treatableManageIntake: number;
+  unhealthyIntake: number;
+  totalIntake: number;
+  liveOutcomes: number;
+  totalOutcomes: number;
+  ownerRequestEuthanasiaUnhealthy: number;
+  liveReleaseRate: number;
+  saveRate: number;
 }

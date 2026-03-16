@@ -11,6 +11,8 @@ const ROLE_DEFAULTS: Record<string, Record<AppModule, PermissionLevel>> = {
     organizations: 'edit',
     reports: 'edit',
     admin: 'edit',
+    foster: 'edit',
+    kennels: 'edit',
   },
   admin: {
     dashboard: 'edit',
@@ -21,6 +23,8 @@ const ROLE_DEFAULTS: Record<string, Record<AppModule, PermissionLevel>> = {
     organizations: 'edit',
     reports: 'edit',
     admin: 'edit',
+    foster: 'edit',
+    kennels: 'edit',
   },
   staff: {
     dashboard: 'view',
@@ -31,6 +35,8 @@ const ROLE_DEFAULTS: Record<string, Record<AppModule, PermissionLevel>> = {
     organizations: 'view',
     reports: 'view',
     admin: 'none',
+    foster: 'edit',
+    kennels: 'view',
   },
 };
 

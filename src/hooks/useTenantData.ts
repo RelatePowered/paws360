@@ -15,6 +15,10 @@ import type {
   DashboardStats,
   User,
   TaxLetterRecord,
+  MedicalRecord,
+  FosterHome,
+  FosterPlacement,
+  KennelLocation,
 } from '@/lib/types';
 
 // Re-export mock data so pages can still use it for initial renders
@@ -30,6 +34,10 @@ export {
   mockAlertRules,
   mockUsers,
   mockDashboardStats,
+  mockMedicalRecords,
+  mockFosterHomes,
+  mockFosterPlacements,
+  mockKennelLocations,
 } from '@/lib/mock-data';
 
 /**
@@ -96,8 +104,25 @@ export function useDashboardStats(fallback?: DashboardStats) {
     totalPeople: 0, totalDonors: 0, totalVolunteers: 0,
     totalAnimals: 0, availableAnimals: 0, adoptionsThisMonth: 0,
     donationsThisMonth: 0, volunteerHoursThisMonth: 0, flaggedAdopters: 0,
+    animalsInFoster: 0, liveReleaseRate: 0, averageLengthOfStay: 0,
   };
   return useFetch(td.getDashboardStats, fallback ?? empty);
+}
+
+export function useMedicalRecords(fallback: MedicalRecord[] = []) {
+  return useFetch(td.getMedicalRecords, fallback);
+}
+
+export function useFosterHomes(fallback: FosterHome[] = []) {
+  return useFetch(td.getFosterHomes, fallback);
+}
+
+export function useFosterPlacements(fallback: FosterPlacement[] = []) {
+  return useFetch(td.getFosterPlacements, fallback);
+}
+
+export function useKennelLocations(fallback: KennelLocation[] = []) {
+  return useFetch(td.getKennelLocations, fallback);
 }
 
 export function useTaxLetters(year: number, fallback: TaxLetterRecord[] = []) {

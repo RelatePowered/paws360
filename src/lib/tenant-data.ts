@@ -19,6 +19,10 @@ import {
   mockUsers,
   mockDashboardStats,
   mockTenants,
+  mockMedicalRecords,
+  mockFosterHomes,
+  mockFosterPlacements,
+  mockKennelLocations,
 } from './mock-data';
 import type {
   Person,
@@ -36,6 +40,10 @@ import type {
   Move,
   StructuredNote,
   AnimalReturn,
+  MedicalRecord,
+  FosterHome,
+  FosterPlacement,
+  KennelLocation,
 } from './types';
 
 // ========== Row → App-type mappers ==========
@@ -172,19 +180,97 @@ function rowToAnimal(r: Record<string, unknown>): Animal {
     gender: r.gender as Animal['gender'],
     size: r.size as Animal['size'],
     age: r.age as string | undefined,
+    dateOfBirth: r.date_of_birth as string | undefined,
     weight: r.weight as number | undefined,
     microchipId: r.microchip_id as string | undefined,
     status: r.status as Animal['status'],
     intakeDate: r.intake_date as string,
     intakeType: r.intake_type as Animal['intakeType'],
+    intakeCondition: (r.intake_condition as Animal['intakeCondition']) ?? 'healthy',
     intakePersonId: r.intake_person_id as string | undefined,
     intakePersonName: r.intake_person_name as string | undefined,
+    alteredStatus: (r.altered_status as Animal['alteredStatus']) ?? 'unknown',
     description: r.description as string,
     medicalNotes: r.medical_notes as string[],
     tags: r.tags as string[],
     photoUrl: r.photo_url as string | undefined,
+    kennelLocation: r.kennel_location as string | undefined,
+    holdExpirationDate: r.hold_expiration_date as string | undefined,
+    outcomeType: r.outcome_type as Animal['outcomeType'],
+    outcomeDate: r.outcome_date as string | undefined,
+    fosterHomeId: r.foster_home_id as string | undefined,
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToMedicalRecord(r: Record<string, unknown>): MedicalRecord {
+  return {
+    id: r.id as string,
+    tenantId: r.tenant_id as string,
+    animalId: r.animal_id as string,
+    type: r.type as MedicalRecord['type'],
+    description: r.description as string,
+    date: r.date as string,
+    veterinarian: r.veterinarian as string | undefined,
+    notes: r.notes as string | undefined,
+    nextDueDate: r.next_due_date as string | undefined,
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToFosterHome(r: Record<string, unknown>): FosterHome {
+  return {
+    id: r.id as string,
+    tenantId: r.tenant_id as string,
+    personId: r.person_id as string | undefined,
+    firstName: r.first_name as string,
+    lastName: r.last_name as string,
+    email: r.email as string,
+    phone: r.phone as string,
+    address: r.address as string | undefined,
+    city: r.city as string | undefined,
+    state: r.state as string | undefined,
+    zip: r.zip as string | undefined,
+    capacity: Number(r.capacity),
+    currentCount: Number(r.current_count),
+    speciesPreference: r.species_preference as FosterHome['speciesPreference'],
+    sizePreference: r.size_preference as FosterHome['sizePreference'],
+    isActive: r.is_active as boolean,
+    notes: r.notes as string | undefined,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToFosterPlacement(r: Record<string, unknown>): FosterPlacement {
+  return {
+    id: r.id as string,
+    tenantId: r.tenant_id as string,
+    animalId: r.animal_id as string,
+    animalName: r.animal_name as string,
+    fosterHomeId: r.foster_home_id as string,
+    fosterName: r.foster_name as string,
+    startDate: r.start_date as string,
+    endDate: r.end_date as string | undefined,
+    status: r.status as FosterPlacement['status'],
+    notes: r.notes as string | undefined,
+    createdAt: r.created_at as string,
+  };
+}
+
+function rowToKennelLocation(r: Record<string, unknown>): KennelLocation {
+  return {
+    id: r.id as string,
+    tenantId: r.tenant_id as string,
+    name: r.name as string,
+    zone: r.zone as string,
+    species: r.species as KennelLocation['species'],
+    size: r.size as KennelLocation['size'],
+    isOccupied: r.is_occupied as boolean,
+    currentAnimalId: r.current_animal_id as string | undefined,
+    currentAnimalName: r.current_animal_name as string | undefined,
+    notes: r.notes as string | undefined,
   };
 }
 
@@ -382,6 +468,7 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
       totalPeople: 0, totalDonors: 0, totalVolunteers: 0,
       totalAnimals: 0, availableAnimals: 0, adoptionsThisMonth: 0,
       donationsThisMonth: 0, volunteerHoursThisMonth: 0, flaggedAdopters: 0,
+      animalsInFoster: 0, liveReleaseRate: 0, averageLengthOfStay: 0,
     };
   }
 
@@ -397,17 +484,64 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const monthDonations = donations.filter(d => d.date.startsWith(thisMonth));
 
+  const animalsInFoster = animals.filter(a => a.status === 'foster').length;
+  const liveStatuses = ['adopted', 'available', 'foster', 'transferred'];
+  const deadStatuses = ['deceased', 'euthanized'];
+  const outcomeAnimals = animals.filter(a => [...liveStatuses.slice(0, 1), ...liveStatuses.slice(3), ...deadStatuses].includes(a.status) || a.outcomeType);
+  const liveOutcomes = outcomeAnimals.filter(a => a.outcomeType === 'adoption' || a.outcomeType === 'return-to-owner' || a.outcomeType === 'transfer-out').length;
+  const totalOutcomes = outcomeAnimals.filter(a => a.outcomeType).length;
+  const liveReleaseRate = totalOutcomes > 0 ? Math.round((liveOutcomes / totalOutcomes) * 1000) / 10 : 0;
+
+  const today = new Date();
+  const animalDays = animals.filter(a => a.status !== 'deceased' && a.status !== 'euthanized').map(a => {
+    const intake = new Date(a.intakeDate);
+    const outcome = a.outcomeDate ? new Date(a.outcomeDate) : today;
+    return Math.ceil((outcome.getTime() - intake.getTime()) / (1000 * 60 * 60 * 24));
+  });
+  const averageLengthOfStay = animalDays.length > 0 ? Math.round(animalDays.reduce((s, d) => s + d, 0) / animalDays.length) : 0;
+
   return {
     totalPeople: people.length,
     totalDonors: people.filter(p => p.roles.includes('donor')).length,
     totalVolunteers: people.filter(p => p.roles.includes('volunteer')).length,
     totalAnimals: animals.length,
     availableAnimals: animals.filter(a => a.status === 'available').length,
-    adoptionsThisMonth: 0, // would need adoptions query filtered by month
+    adoptionsThisMonth: 0,
     donationsThisMonth: monthDonations.reduce((s, d) => s + (d.amount ?? d.estimatedValue ?? 0), 0),
     volunteerHoursThisMonth: monthDonations.filter(d => d.type === 'time').reduce((s, d) => s + (d.hours ?? 0), 0),
     flaggedAdopters: adopters.filter(a => a.flagged).length,
+    animalsInFoster,
+    liveReleaseRate,
+    averageLengthOfStay,
   };
+}
+
+export async function getMedicalRecords(tenantId: string): Promise<MedicalRecord[]> {
+  const sb = getSupabase();
+  if (!sb) return mockMedicalRecords.filter(r => r.tenantId === tenantId);
+  const { data } = await sb.from('medical_records').select('*').eq('tenant_id', tenantId);
+  return (data ?? []).map(r => rowToMedicalRecord(r as Record<string, unknown>));
+}
+
+export async function getFosterHomes(tenantId: string): Promise<FosterHome[]> {
+  const sb = getSupabase();
+  if (!sb) return mockFosterHomes.filter(h => h.tenantId === tenantId);
+  const { data } = await sb.from('foster_homes').select('*').eq('tenant_id', tenantId);
+  return (data ?? []).map(r => rowToFosterHome(r as Record<string, unknown>));
+}
+
+export async function getFosterPlacements(tenantId: string): Promise<FosterPlacement[]> {
+  const sb = getSupabase();
+  if (!sb) return mockFosterPlacements.filter(p => p.tenantId === tenantId);
+  const { data } = await sb.from('foster_placements').select('*').eq('tenant_id', tenantId);
+  return (data ?? []).map(r => rowToFosterPlacement(r as Record<string, unknown>));
+}
+
+export async function getKennelLocations(tenantId: string): Promise<KennelLocation[]> {
+  const sb = getSupabase();
+  if (!sb) return mockKennelLocations.filter(k => k.tenantId === tenantId);
+  const { data } = await sb.from('kennel_locations').select('*').eq('tenant_id', tenantId);
+  return (data ?? []).map(r => rowToKennelLocation(r as Record<string, unknown>));
 }
 
 export async function buildTenantTaxLetters(tenantId: string, year: number): Promise<TaxLetterRecord[]> {

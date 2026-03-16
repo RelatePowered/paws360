@@ -13,6 +13,8 @@ import {
   Settings,
   Share2,
   X,
+  Home,
+  MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -30,6 +32,8 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, module: 'dashboard' },
   { name: 'People', href: '/people', icon: Users, module: 'people' },
   { name: 'Animals', href: '/animals', icon: PawPrint, module: 'animals' },
+  { name: 'Kennel Map', href: '/kennels', icon: MapPin, module: 'animals' },
+  { name: 'Foster', href: '/foster', icon: Home, module: 'animals' },
   { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
   { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
   { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },

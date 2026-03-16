@@ -11,6 +11,10 @@ import {
   TaxLetterRecord,
   Tenant,
   User,
+  MedicalRecord,
+  FosterHome,
+  FosterPlacement,
+  KennelLocation,
 } from './types';
 
 // ========== Tenants ==========
@@ -190,44 +194,84 @@ export const mockPeople: Person[] = [
 export const mockAnimals: Animal[] = [
   {
     id: 'a-1', tenantId: T1, animalId: 'DOG-2024-0042', name: 'Buddy', species: 'dog', breed: 'Golden Retriever',
-    color: 'Golden', gender: 'male', size: 'large', age: '3 years', weight: 65,
+    color: 'Golden', gender: 'male', size: 'large', age: '3 years', dateOfBirth: '2021-06-15', weight: 65,
     microchipId: 'MC-98765', status: 'available', intakeDate: '2024-09-01', intakeType: 'surrender',
+    intakeCondition: 'healthy', alteredStatus: 'neutered',
     intakePersonId: 'p-4', intakePersonName: 'James Williams',
     description: 'Friendly, well-socialized golden retriever. Good with kids and other dogs.',
     medicalNotes: ['Vaccinations up to date', 'Neutered'], tags: ['Good with Kids'],
-    createdAt: '2024-09-01', updatedAt: '2024-09-01',
+    kennelLocation: 'D-101', createdAt: '2024-09-01', updatedAt: '2024-09-01',
   },
   {
     id: 'a-2', tenantId: T1, animalId: 'CAT-2024-0108', name: 'Whiskers', species: 'cat', breed: 'Domestic Shorthair',
-    color: 'Tabby', gender: 'female', size: 'small', age: '5 years', weight: 9,
+    color: 'Tabby', gender: 'female', size: 'small', age: '5 years', dateOfBirth: '2019-03-20', weight: 9,
     status: 'adopted', intakeDate: '2024-07-15', intakeType: 'stray',
+    intakeCondition: 'healthy', alteredStatus: 'spayed',
+    outcomeType: 'adoption', outcomeDate: '2024-10-01',
     description: 'Calm and affectionate. Loves lap time. Indoor only recommended.',
     medicalNotes: ['Spayed', 'FIV negative', 'FeLV negative'], tags: ['Senior'],
     createdAt: '2024-07-15', updatedAt: '2024-10-01',
   },
   {
     id: 'a-3', tenantId: T1, animalId: 'DOG-2024-0067', name: 'Luna', species: 'dog', breed: 'Labrador Mix',
-    color: 'Black', gender: 'female', size: 'medium', age: '1 year', weight: 45,
+    color: 'Black', gender: 'female', size: 'medium', age: '1 year', dateOfBirth: '2023-10-01', weight: 45,
     status: 'available', intakeDate: '2024-10-05', intakeType: 'transfer',
+    intakeCondition: 'healthy', alteredStatus: 'spayed',
     description: 'Energetic young lab mix. Needs an active family. Basic obedience trained.',
     medicalNotes: ['Vaccinations up to date', 'Spayed', 'Heartworm negative'], tags: [],
-    createdAt: '2024-10-05', updatedAt: '2024-10-05',
+    kennelLocation: 'D-103', createdAt: '2024-10-05', updatedAt: '2024-10-05',
   },
   {
     id: 'a-4', tenantId: T1, animalId: 'CAT-2024-0115', name: 'Oliver', species: 'cat', breed: 'Siamese Mix',
-    color: 'Cream/Brown', gender: 'male', size: 'medium', age: '2 years', weight: 11,
+    color: 'Cream/Brown', gender: 'male', size: 'medium', age: '2 years', dateOfBirth: '2022-05-10', weight: 11,
     status: 'medical-hold', intakeDate: '2024-10-10', intakeType: 'confiscation',
+    intakeCondition: 'treatable-rehabilitable', alteredStatus: 'neutered',
+    holdExpirationDate: '2024-10-20',
     description: 'Shy but warming up. Needs a quiet home. May have dental issues.',
     medicalNotes: ['Needs dental evaluation', 'Neutered', 'Underweight - on feeding plan'],
-    tags: ['Special Needs'], createdAt: '2024-10-10', updatedAt: '2024-10-10',
+    tags: ['Special Needs'], kennelLocation: 'C-205',
+    createdAt: '2024-10-10', updatedAt: '2024-10-10',
   },
   {
     id: 'a-5', tenantId: T1, animalId: 'DOG-2024-0089', name: 'Max', species: 'dog', breed: 'German Shepherd',
-    color: 'Black/Tan', gender: 'male', size: 'large', age: '4 years', weight: 80,
+    color: 'Black/Tan', gender: 'male', size: 'large', age: '4 years', dateOfBirth: '2020-08-12', weight: 80,
     status: 'foster', intakeDate: '2024-08-20', intakeType: 'surrender',
+    intakeCondition: 'treatable-manageable', alteredStatus: 'neutered',
+    fosterHomeId: 'fh-1',
     description: 'Loyal and protective. Best as only pet. Experienced owner preferred.',
     medicalNotes: ['Vaccinations up to date', 'Neutered', 'Hip dysplasia - managed'],
     tags: ['Special Needs'], createdAt: '2024-08-20', updatedAt: '2024-09-15',
+  },
+  {
+    id: 'a-6', tenantId: T1, animalId: 'DOG-2024-0095', name: 'Rosie', species: 'dog', breed: 'Beagle',
+    color: 'Tri-color', gender: 'female', size: 'medium', age: '6 years', dateOfBirth: '2018-02-14', weight: 28,
+    status: 'euthanized', intakeDate: '2024-06-01', intakeType: 'stray',
+    intakeCondition: 'unhealthy-untreatable', alteredStatus: 'spayed',
+    outcomeType: 'euthanasia-shelter', outcomeDate: '2024-06-05',
+    description: 'Found as stray in severe condition. Aggressive bone cancer.',
+    medicalNotes: ['Severe osteosarcoma', 'Compassionate euthanasia recommended'],
+    tags: [], createdAt: '2024-06-01', updatedAt: '2024-06-05',
+  },
+  {
+    id: 'a-7', tenantId: T1, animalId: 'CAT-2024-0120', name: 'Mittens', species: 'cat', breed: 'Maine Coon Mix',
+    color: 'Orange Tabby', gender: 'female', size: 'medium', age: '3 years', dateOfBirth: '2021-11-30', weight: 12,
+    status: 'adopted', intakeDate: '2024-08-10', intakeType: 'surrender',
+    intakeCondition: 'healthy', alteredStatus: 'spayed',
+    outcomeType: 'adoption', outcomeDate: '2024-09-15',
+    description: 'Playful and social. Gets along with other cats. Loves window perches.',
+    medicalNotes: ['Vaccinations up to date', 'Spayed'],
+    tags: ['Good with Kids'], createdAt: '2024-08-10', updatedAt: '2024-09-15',
+  },
+  {
+    id: 'a-8', tenantId: T1, animalId: 'DOG-2024-0101', name: 'Cooper', species: 'dog', breed: 'Pit Bull Mix',
+    color: 'Brindle', gender: 'male', size: 'large', age: '2 years', dateOfBirth: '2022-04-20', weight: 60,
+    status: 'intake', intakeDate: '2024-10-28', intakeType: 'stray',
+    intakeCondition: 'healthy', alteredStatus: 'intact',
+    holdExpirationDate: '2024-11-01',
+    description: 'Found wandering near Highway 46. Friendly, no collar. Scanning for microchip.',
+    medicalNotes: ['Intake exam pending'],
+    tags: [], kennelLocation: 'D-105',
+    createdAt: '2024-10-28', updatedAt: '2024-10-28',
   },
 ];
 
@@ -339,13 +383,105 @@ export const mockDashboardStats: DashboardStats = {
   totalPeople: 5,
   totalDonors: 3,
   totalVolunteers: 3,
-  totalAnimals: 5,
+  totalAnimals: 8,
   availableAnimals: 2,
   adoptionsThisMonth: 1,
   donationsThisMonth: 15320,
   volunteerHoursThisMonth: 48,
   flaggedAdopters: 1,
+  animalsInFoster: 1,
+  liveReleaseRate: 85.7,
+  averageLengthOfStay: 24,
 };
+
+// ========== Medical Records ==========
+
+export const mockMedicalRecords: MedicalRecord[] = [
+  { id: 'mr-1', tenantId: T1, animalId: 'a-1', type: 'vaccination', description: 'DHPP Booster', date: '2024-09-01', veterinarian: 'Dr. Sarah Martinez', nextDueDate: '2025-09-01', createdAt: '2024-09-01' },
+  { id: 'mr-2', tenantId: T1, animalId: 'a-1', type: 'vaccination', description: 'Rabies Vaccination', date: '2024-09-01', veterinarian: 'Dr. Sarah Martinez', nextDueDate: '2025-09-01', createdAt: '2024-09-01' },
+  { id: 'mr-3', tenantId: T1, animalId: 'a-1', type: 'surgery', description: 'Neuter Surgery', date: '2024-09-05', veterinarian: 'Dr. Sarah Martinez', notes: 'Routine, no complications', createdAt: '2024-09-05' },
+  { id: 'mr-4', tenantId: T1, animalId: 'a-2', type: 'vaccination', description: 'FVRCP', date: '2024-07-16', veterinarian: 'Dr. James Wilson', nextDueDate: '2025-07-16', createdAt: '2024-07-16' },
+  { id: 'mr-5', tenantId: T1, animalId: 'a-2', type: 'test', description: 'FIV/FeLV Test - Negative', date: '2024-07-16', veterinarian: 'Dr. James Wilson', createdAt: '2024-07-16' },
+  { id: 'mr-6', tenantId: T1, animalId: 'a-3', type: 'vaccination', description: 'DHPP + Bordetella', date: '2024-10-05', veterinarian: 'Dr. Sarah Martinez', nextDueDate: '2025-10-05', createdAt: '2024-10-05' },
+  { id: 'mr-7', tenantId: T1, animalId: 'a-3', type: 'test', description: 'Heartworm Test - Negative', date: '2024-10-05', veterinarian: 'Dr. Sarah Martinez', createdAt: '2024-10-05' },
+  { id: 'mr-8', tenantId: T1, animalId: 'a-4', type: 'exam', description: 'Intake Examination', date: '2024-10-10', veterinarian: 'Dr. James Wilson', notes: 'Underweight, dental issues noted. Start feeding plan.', createdAt: '2024-10-10' },
+  { id: 'mr-9', tenantId: T1, animalId: 'a-4', type: 'treatment', description: 'Deworming Treatment', date: '2024-10-10', veterinarian: 'Dr. James Wilson', createdAt: '2024-10-10' },
+  { id: 'mr-10', tenantId: T1, animalId: 'a-5', type: 'exam', description: 'Hip Dysplasia Assessment', date: '2024-08-22', veterinarian: 'Dr. Sarah Martinez', notes: 'Moderate bilateral hip dysplasia. Manage with joint supplements and controlled exercise.', createdAt: '2024-08-22' },
+  { id: 'mr-11', tenantId: T1, animalId: 'a-5', type: 'medication', description: 'Glucosamine/Chondroitin Joint Supplement', date: '2024-08-22', veterinarian: 'Dr. Sarah Martinez', notes: 'Daily — continue indefinitely', createdAt: '2024-08-22' },
+  { id: 'mr-12', tenantId: T1, animalId: 'a-8', type: 'exam', description: 'Intake Examination', date: '2024-10-28', veterinarian: 'Dr. James Wilson', notes: 'Healthy, good body condition. No microchip found.', createdAt: '2024-10-28' },
+];
+
+// ========== Foster Homes ==========
+
+export const mockFosterHomes: FosterHome[] = [
+  {
+    id: 'fh-1', tenantId: T1, personId: 'p-1', firstName: 'Sarah', lastName: 'Johnson',
+    email: 'sarah.j@email.com', phone: '(555) 123-4567',
+    address: '123 Oak St', city: 'Dickson', state: 'TN', zip: '37055',
+    capacity: 2, currentCount: 1,
+    speciesPreference: ['dog'], sizePreference: ['medium', 'large'],
+    isActive: true, notes: 'Has fenced yard. Experienced with large breeds.',
+    createdAt: '2024-06-01', updatedAt: '2024-09-15',
+  },
+  {
+    id: 'fh-2', tenantId: T1, firstName: 'Maria', lastName: 'Garcia',
+    email: 'mgarcia@email.com', phone: '(555) 222-3333',
+    address: '800 Elm St', city: 'Dickson', state: 'TN', zip: '37055',
+    capacity: 3, currentCount: 0,
+    speciesPreference: ['cat', 'dog'], sizePreference: ['small', 'medium'],
+    isActive: true, notes: 'Has experience with kittens and bottle-feeding neonates.',
+    createdAt: '2024-04-10', updatedAt: '2024-10-01',
+  },
+  {
+    id: 'fh-3', tenantId: T1, firstName: 'David', lastName: 'Thompson',
+    email: 'dthompson@email.com', phone: '(555) 444-5555',
+    address: '550 Walnut Dr', city: 'Dickson', state: 'TN', zip: '37055',
+    capacity: 1, currentCount: 0,
+    speciesPreference: ['dog'], sizePreference: ['small', 'medium'],
+    isActive: true, notes: 'Apartment, no yard. Good for calm dogs.',
+    createdAt: '2024-07-20', updatedAt: '2024-07-20',
+  },
+];
+
+// ========== Foster Placements ==========
+
+export const mockFosterPlacements: FosterPlacement[] = [
+  {
+    id: 'fp-1', tenantId: T1, animalId: 'a-5', animalName: 'Max',
+    fosterHomeId: 'fh-1', fosterName: 'Sarah Johnson',
+    startDate: '2024-09-15', status: 'active',
+    notes: 'Max is doing well with daily joint supplement regimen.',
+    createdAt: '2024-09-15',
+  },
+  {
+    id: 'fp-2', tenantId: T1, animalId: 'a-7', animalName: 'Mittens',
+    fosterHomeId: 'fh-2', fosterName: 'Maria Garcia',
+    startDate: '2024-08-15', endDate: '2024-09-10', status: 'completed',
+    notes: 'Mittens socialized well. Ready for adoption.',
+    createdAt: '2024-08-15',
+  },
+];
+
+// ========== Kennel Locations ==========
+
+export const mockKennelLocations: KennelLocation[] = [
+  // Dog Zone
+  { id: 'k-1', tenantId: T1, name: 'D-101', zone: 'Dog Wing A', species: 'dog', size: 'large', isOccupied: true, currentAnimalId: 'a-1', currentAnimalName: 'Buddy' },
+  { id: 'k-2', tenantId: T1, name: 'D-102', zone: 'Dog Wing A', species: 'dog', size: 'large', isOccupied: false },
+  { id: 'k-3', tenantId: T1, name: 'D-103', zone: 'Dog Wing A', species: 'dog', size: 'medium', isOccupied: true, currentAnimalId: 'a-3', currentAnimalName: 'Luna' },
+  { id: 'k-4', tenantId: T1, name: 'D-104', zone: 'Dog Wing A', species: 'dog', size: 'medium', isOccupied: false },
+  { id: 'k-5', tenantId: T1, name: 'D-105', zone: 'Dog Wing B', species: 'dog', size: 'large', isOccupied: true, currentAnimalId: 'a-8', currentAnimalName: 'Cooper' },
+  { id: 'k-6', tenantId: T1, name: 'D-106', zone: 'Dog Wing B', species: 'dog', size: 'large', isOccupied: false },
+  { id: 'k-7', tenantId: T1, name: 'D-107', zone: 'Dog Wing B', species: 'dog', size: 'small', isOccupied: false },
+  { id: 'k-8', tenantId: T1, name: 'D-108', zone: 'Dog Wing B', species: 'dog', size: 'small', isOccupied: false },
+  // Cat Zone
+  { id: 'k-9', tenantId: T1, name: 'C-201', zone: 'Cat Room', species: 'cat', size: 'small', isOccupied: false },
+  { id: 'k-10', tenantId: T1, name: 'C-202', zone: 'Cat Room', species: 'cat', size: 'small', isOccupied: false },
+  { id: 'k-11', tenantId: T1, name: 'C-203', zone: 'Cat Room', species: 'cat', size: 'medium', isOccupied: false },
+  { id: 'k-12', tenantId: T1, name: 'C-204', zone: 'Cat Room', species: 'cat', size: 'medium', isOccupied: false },
+  { id: 'k-13', tenantId: T1, name: 'C-205', zone: 'Cat Isolation', species: 'cat', size: 'medium', isOccupied: true, currentAnimalId: 'a-4', currentAnimalName: 'Oliver', notes: 'Medical hold — dental eval pending' },
+  { id: 'k-14', tenantId: T1, name: 'C-206', zone: 'Cat Isolation', species: 'cat', size: 'small', isOccupied: false },
+];
 
 // Helper to build tax letter records from donations (legacy — prefer buildTenantTaxLetters in tenant-data.ts)
 export function buildTaxLetters(year: number): TaxLetterRecord[] {

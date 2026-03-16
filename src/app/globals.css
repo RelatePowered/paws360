@@ -73,3 +73,25 @@ body {
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
+/* Cage card print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .cage-card, .cage-card * {
+    visibility: visible;
+  }
+  .cage-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4in;
+    font-size: 10pt;
+    padding: 8pt;
+    border: 2pt solid black;
+  }
+  [data-print-hide] {
+    display: none;
+  }
+}

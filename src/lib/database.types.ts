@@ -182,17 +182,25 @@ export interface Database {
           gender: string;
           size: string;
           age: string | null;
+          date_of_birth: string | null;
           weight: number | null;
           microchip_id: string | null;
           status: string;
           intake_date: string;
           intake_type: string;
+          intake_condition: string;
           intake_person_id: string | null;
           intake_person_name: string | null;
+          altered_status: string;
           description: string;
           medical_notes: string[];
           tags: string[];
           photo_url: string | null;
+          kennel_location: string | null;
+          hold_expiration_date: string | null;
+          outcome_type: string | null;
+          outcome_date: string | null;
+          foster_home_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -212,6 +220,110 @@ export interface Database {
           description: string;
         };
         Update: Partial<Database['public']['Tables']['animals']['Row']>;
+      };
+      medical_records: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          type: string;
+          description: string;
+          date: string;
+          veterinarian: string | null;
+          notes: string | null;
+          next_due_date: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['medical_records']['Row']> & {
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          type: string;
+          description: string;
+          date: string;
+        };
+        Update: Partial<Database['public']['Tables']['medical_records']['Row']>;
+      };
+      foster_homes: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          person_id: string | null;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          capacity: number;
+          current_count: number;
+          species_preference: string[];
+          size_preference: string[];
+          is_active: boolean;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['foster_homes']['Row']> & {
+          id: string;
+          tenant_id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string;
+        };
+        Update: Partial<Database['public']['Tables']['foster_homes']['Row']>;
+      };
+      foster_placements: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          animal_name: string;
+          foster_home_id: string;
+          foster_name: string;
+          start_date: string;
+          end_date: string | null;
+          status: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['foster_placements']['Row']> & {
+          id: string;
+          tenant_id: string;
+          animal_id: string;
+          animal_name: string;
+          foster_home_id: string;
+          foster_name: string;
+          start_date: string;
+          status: string;
+        };
+        Update: Partial<Database['public']['Tables']['foster_placements']['Row']>;
+      };
+      kennel_locations: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          zone: string;
+          species: string;
+          size: string;
+          is_occupied: boolean;
+          current_animal_id: string | null;
+          current_animal_name: string | null;
+          notes: string | null;
+        };
+        Insert: Partial<Database['public']['Tables']['kennel_locations']['Row']> & {
+          id: string;
+          tenant_id: string;
+          name: string;
+          zone: string;
+          species: string;
+          size: string;
+        };
+        Update: Partial<Database['public']['Tables']['kennel_locations']['Row']>;
       };
       admin_tags: {
         Row: {

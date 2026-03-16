@@ -8,6 +8,9 @@ import {
   Clock,
   AlertTriangle,
   TrendingUp,
+  Shield,
+  Home,
+  Calendar,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
@@ -34,18 +37,18 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total People"
-          value={stats.totalPeople}
-          subtitle={`${stats.totalDonors} donors, ${stats.totalVolunteers} volunteers`}
-          icon={<Users className="w-5 h-5" />}
-          iconColor="bg-primary/10 text-primary"
-        />
-        <StatCard
           title="Animals"
           value={stats.totalAnimals}
-          subtitle={`${stats.availableAnimals} available for adoption`}
+          subtitle={`${stats.availableAnimals} available, ${stats.animalsInFoster} in foster`}
           icon={<PawPrint className="w-5 h-5" />}
           iconColor="bg-success/10 text-success"
+        />
+        <StatCard
+          title="Live Release Rate"
+          value={`${stats.liveReleaseRate}%`}
+          subtitle={stats.liveReleaseRate >= 90 ? 'No-kill benchmark met' : 'Below 90% no-kill benchmark'}
+          icon={<Shield className="w-5 h-5" />}
+          iconColor={stats.liveReleaseRate >= 90 ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}
         />
         <StatCard
           title="Donations This Month"
@@ -55,10 +58,10 @@ export default function DashboardPage() {
           iconColor="bg-warning/10 text-warning"
         />
         <StatCard
-          title="Volunteer Hours"
-          value={stats.volunteerHoursThisMonth}
-          subtitle="Hours this month"
-          icon={<Clock className="w-5 h-5" />}
+          title="Avg Length of Stay"
+          value={`${stats.averageLengthOfStay}d`}
+          subtitle={`${stats.totalPeople} people, ${stats.volunteerHoursThisMonth}h volunteer`}
+          icon={<Calendar className="w-5 h-5" />}
           iconColor="bg-info/10 text-info"
         />
       </div>
