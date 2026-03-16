@@ -1,20 +1,35 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
-/** Routes that render without the sidebar/header shell. */
-const BARE_ROUTES = ['/login', '/auth', '/marketing'];
+/** Routes that render without the sidebar/header shell and don't require auth. */
+const PUBLIC_ROUTES = ['/login', '/auth', '/marketing'];
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
-  // Login and auth callback pages render bare (no shell chrome)
-  if (BARE_ROUTES.some(r => pathname.startsWith(r))) {
+  // Public pages render bare (no shell chrome), no auth required
+  const isPublicRoute = PUBLIC_ROUTES.some(r => pathname.startsWith(r));
+
+  useEffect(() => {
+    if (!isPublicRoute && !isAuthenticated) {
+      window.location.href = '/marketing';
+    }
+  }, [isPublicRoute, isAuthenticated]);
+
+  if (isPublicRoute) {
     return <>{children}</>;
+  }
+
+  // Don't render protected content until authenticated
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (

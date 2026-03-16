@@ -58,19 +58,40 @@ function withDefaults(user: User | null): User | null {
   return { ...user, permissions: {} };
 }
 
+/** Restore a mock-mode session from sessionStorage (if any). */
+function restoreMockSession(): { user: User | null; tenantId: string | null } {
+  if (typeof window === 'undefined') return { user: null, tenantId: null };
+  try {
+    const userId = sessionStorage.getItem('mockUserId');
+    if (!userId) return { user: null, tenantId: null };
+    const user = mockUsers.find(u => u.id === userId) ?? null;
+    return { user: withDefaults(user), tenantId: user?.tenantId ?? null };
+  } catch {
+    return { user: null, tenantId: null };
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabaseReady = isSupabaseConfigured();
 
   // ── State ──
-  const [currentUser, setCurrentUser] = useState<User | null>(
-    !supabaseReady ? withDefaults(mockUsers[0] ?? null) : null
-  );
-  const [activeTenantId, setActiveTenantId] = useState<string | null>(
-    !supabaseReady ? (mockUsers[0]?.tenantId ?? null) : null
-  );
-  const [tenants, setTenants] = useState<Tenant[]>(
-    !supabaseReady ? mockTenants : []
-  );
+  // In mock mode, start unauthenticated; users must sign in via /login.
+  // The mock session is persisted in sessionStorage so it survives client-side
+  // navigations and soft reloads but not new tabs/browser restarts.
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+
+  // Restore mock session on mount (client-side only)
+  useEffect(() => {
+    if (supabaseReady) return;
+    const { user, tenantId } = restoreMockSession();
+    if (user) {
+      setCurrentUser(user);
+      setActiveTenantId(tenantId);
+      setTenants(mockTenants);
+    }
+  }, [supabaseReady]);
 
   // ── Supabase auth session listener ──
   useEffect(() => {
@@ -185,6 +206,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       setCurrentUser(withDefaults(user));
       setActiveTenantId(user.tenantId);
+      setTenants(mockTenants);
+      try { sessionStorage.setItem('mockUserId', userId); } catch {}
     }
   }, [supabaseReady]);
 
@@ -196,9 +219,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null);
     setActiveTenantId(null);
     setTenants([]);
+    try { sessionStorage.removeItem('mockUserId'); } catch {}
     // Hard redirect to force a full server round-trip through middleware,
     // ensuring cookies are cleared and no stale client state persists.
-    window.location.href = '/login';
+    window.location.href = '/marketing';
   }, [supabaseReady]);
 
   return (
