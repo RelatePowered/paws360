@@ -381,10 +381,10 @@ export default function ProductGuidePage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/marketing/gtm"
+                href="/marketing"
                 className="inline-flex items-center gap-2 px-6 py-3 border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-indigo-300 transition-colors"
               >
-                View GTM Strategy
+                Back to Home
               </Link>
             </div>
           </div>

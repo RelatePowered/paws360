@@ -41,7 +41,6 @@ function Nav() {
           <a href="#differentiators" className="hover:text-indigo-600 transition-colors">Why ShelterHub</a>
           <a href="#pricing" className="hover:text-indigo-600 transition-colors">Pricing</a>
           <Link href="/marketing/guide" className="hover:text-indigo-600 transition-colors">Product Guide</Link>
-          <Link href="/marketing/gtm" className="hover:text-indigo-600 transition-colors">GTM Strategy</Link>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors">Sign In</Link>
@@ -497,7 +496,7 @@ export default function MarketingPage() {
           </div>
           <div className="flex items-center gap-6 text-sm text-slate-500">
             <Link href="/marketing/guide" className="hover:text-indigo-600">Product Guide</Link>
-            <Link href="/marketing/gtm" className="hover:text-indigo-600">GTM Strategy</Link>
+
             <a href="#pricing" className="hover:text-indigo-600">Pricing</a>
             <Link href="/login" className="hover:text-indigo-600">Sign In</Link>
           </div>
