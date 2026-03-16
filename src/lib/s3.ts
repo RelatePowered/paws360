@@ -2,18 +2,17 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 let _client: S3Client | null = null;
 
+/**
+ * Returns an S3Client that uses the default AWS credential provider chain.
+ * In AWS Amplify this automatically picks up the IAM role attached to the
+ * compute environment — no access keys required.
+ */
 export function getS3Client(): S3Client | null {
-  const region = process.env.S3_REGION;
-  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
-
-  if (!region || !accessKeyId || !secretAccessKey) return null;
+  const region = process.env.S3_REGION ?? process.env.AWS_REGION;
+  if (!region) return null;
 
   if (!_client) {
-    _client = new S3Client({
-      region,
-      credentials: { accessKeyId, secretAccessKey },
-    });
+    _client = new S3Client({ region });
   }
   return _client;
 }
@@ -25,8 +24,6 @@ export function getS3Bucket(): string {
 export function isS3Configured(): boolean {
   return Boolean(
     process.env.S3_BUCKET_NAME &&
-    process.env.S3_REGION &&
-    process.env.S3_ACCESS_KEY_ID &&
-    process.env.S3_SECRET_ACCESS_KEY
+    (process.env.S3_REGION || process.env.AWS_REGION)
   );
 }
