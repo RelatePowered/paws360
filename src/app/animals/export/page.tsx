@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { UpgradeGate } from '@/components/ui/UpgradeGate';
 import {
   Download,
   Globe,
@@ -161,6 +162,7 @@ export default function AnimalExportPage() {
   };
 
   return (
+    <UpgradeGate feature="petfinder_export">
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Publish Animals</h1>
@@ -328,5 +330,6 @@ export default function AnimalExportPage() {
         </CardBody>
       </Card>
     </div>
+    </UpgradeGate>
   );
 }

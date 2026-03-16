@@ -1,5 +1,7 @@
 'use client';
 
+import { UpgradeGate } from '@/components/ui/UpgradeGate';
+
 import { useState } from 'react';
 import { Share2, RefreshCw, Copy, Check, Facebook, Twitter, Instagram } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
@@ -56,6 +58,7 @@ export default function SocialMediaPage() {
   }
 
   return (
+    <UpgradeGate feature="social_media_ai">
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -218,5 +221,6 @@ export default function SocialMediaPage() {
         </div>
       </div>
     </div>
+    </UpgradeGate>
   );
 }

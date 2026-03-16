@@ -56,6 +56,7 @@ function rowToTenant(r: Record<string, unknown>): Tenant {
     id: r.id as string,
     name: r.name as string,
     slug: r.slug as string,
+    plan: (r.plan as Tenant['plan']) ?? 'starter',
     address: r.address as string | undefined,
     city: r.city as string | undefined,
     state: r.state as string | undefined,

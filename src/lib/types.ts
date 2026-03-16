@@ -1,9 +1,45 @@
 // ========== Multi-Tenancy & User Types ==========
 
+/** Subscription plan tiers matching the pricing model. */
+export type PlanTier = 'starter' | 'professional' | 'enterprise';
+
+/** Features that can be gated by plan tier. */
+export type GatedFeature =
+  | 'asilomar_reports'
+  | 'sac_reports'
+  | 'petfinder_export'
+  | 'adopt_a_pet_export'
+  | 'adoption_applications'
+  | 'foster_management'
+  | 'kennel_map'
+  | 'vaccination_alerts'
+  | 'social_media_ai'
+  | 'point_of_adoption_donations'
+  | 'moves_management'
+  | 'multi_tenant'
+  | 'sso'
+  | 'api_access'
+  | 'custom_integrations';
+
+export interface PlanLimits {
+  maxUsers: number;         // 0 = unlimited
+  maxAnimalsPerYear: number; // 0 = unlimited
+  features: GatedFeature[];
+}
+
+/** Plan metadata for display / billing reference. */
+export interface PlanInfo {
+  tier: PlanTier;
+  name: string;
+  price: string;        // e.g. "$49/mo", "Custom"
+  limits: PlanLimits;
+}
+
 export interface Tenant {
   id: string;
   name: string; // e.g., "Springfield Humane Society"
   slug: string; // URL-friendly identifier
+  plan: PlanTier;
   address?: string;
   city?: string;
   state?: string;

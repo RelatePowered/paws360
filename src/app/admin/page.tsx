@@ -23,9 +23,11 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { useAuth } from '@/context/AuthContext';
 import { useUsers, useTags, useAlertRules, mockTags, mockAlertRules, mockUsers } from '@/hooks/useTenantData';
 import { formatDate, generateId, getSeverityColor } from '@/lib/utils';
-import type { AdminTag, AlertRule, User, UserRole } from '@/lib/types';
+import { PLAN_DEFINITIONS, FEATURE_LABELS, getPlanInfo } from '@/lib/plans';
+import type { AdminTag, AlertRule, User, UserRole, PlanTier, GatedFeature } from '@/lib/types';
+import { CreditCard, CheckCircle2, Lock, Sparkles } from 'lucide-react';
 
-type AdminTab = 'users' | 'tags' | 'rules';
+type AdminTab = 'users' | 'tags' | 'rules' | 'plan';
 
 export default function AdminPage() {
   const { currentTenant, canView: userCanView, canEdit: userCanEdit } = useAuth();
@@ -256,6 +258,14 @@ export default function AdminPage() {
           }`}
         >
           <Shield className="w-4 h-4" />Alert Rules ({rules.length})
+        </button>
+        <button
+          onClick={() => setTab('plan')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+            tab === 'plan' ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />Plan
         </button>
       </div>
 
@@ -560,6 +570,122 @@ export default function AdminPage() {
           </div>
         </form>
       </Modal>
+
+      {/* ────────── PLAN TAB ────────── */}
+      {tab === 'plan' && (
+        <div className="space-y-6">
+          {/* Current Plan Card */}
+          <Card>
+            <CardBody>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                    currentTenant?.plan === 'enterprise' ? 'bg-violet-100 dark:bg-violet-900/30' :
+                    currentTenant?.plan === 'professional' ? 'bg-indigo-100 dark:bg-indigo-900/30' :
+                    'bg-slate-100 dark:bg-slate-800'
+                  }`}>
+                    <Sparkles className={`w-7 h-7 ${
+                      currentTenant?.plan === 'enterprise' ? 'text-violet-600 dark:text-violet-400' :
+                      currentTenant?.plan === 'professional' ? 'text-indigo-600 dark:text-indigo-400' :
+                      'text-slate-600 dark:text-slate-400'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted">Current Plan</p>
+                    <h3 className="text-2xl font-black">{getPlanInfo(currentTenant?.plan ?? 'starter').name}</h3>
+                    <p className="text-sm text-muted">{getPlanInfo(currentTenant?.plan ?? 'starter').price}</p>
+                  </div>
+                </div>
+                <div className="text-right text-sm text-muted space-y-1">
+                  <p>Max Users: <span className="font-semibold text-foreground">
+                    {getPlanInfo(currentTenant?.plan ?? 'starter').limits.maxUsers === 0 ? 'Unlimited' : getPlanInfo(currentTenant?.plan ?? 'starter').limits.maxUsers}
+                  </span></p>
+                  <p>Max Animals/Year: <span className="font-semibold text-foreground">
+                    {getPlanInfo(currentTenant?.plan ?? 'starter').limits.maxAnimalsPerYear === 0 ? 'Unlimited' : getPlanInfo(currentTenant?.plan ?? 'starter').limits.maxAnimalsPerYear.toLocaleString()}
+                  </span></p>
+                  <p>Users Active: <span className="font-semibold text-foreground">{users.filter(u => u.isActive).length}</span></p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Plan Comparison */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(['starter', 'professional', 'enterprise'] as PlanTier[]).map(tier => {
+              const plan = PLAN_DEFINITIONS[tier];
+              const isCurrent = (currentTenant?.plan ?? 'starter') === tier;
+              return (
+                <Card key={tier} className={isCurrent ? 'ring-2 ring-primary' : ''}>
+                  <CardBody>
+                    <div className="text-center mb-4">
+                      {isCurrent && <Badge className="bg-primary/10 text-primary mb-2">Current Plan</Badge>}
+                      <h4 className="text-lg font-bold">{plan.name}</h4>
+                      <p className="text-2xl font-black mt-1">{plan.price}</p>
+                      <p className="text-xs text-muted mt-1">
+                        {plan.limits.maxUsers === 0 ? 'Unlimited' : plan.limits.maxUsers} users
+                        {' · '}
+                        {plan.limits.maxAnimalsPerYear === 0 ? 'Unlimited' : plan.limits.maxAnimalsPerYear.toLocaleString()} animals/yr
+                      </p>
+                    </div>
+                    {!isCurrent && (
+                      <Button
+                        className="w-full mb-4"
+                        variant={tier === 'professional' ? 'primary' : 'outline'}
+                      >
+                        {tier === 'enterprise' ? 'Contact Sales' : `Upgrade to ${plan.name}`}
+                      </Button>
+                    )}
+                  </CardBody>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Feature Matrix */}
+          <Card>
+            <CardBody>
+              <h3 className="font-bold mb-4">Feature Availability by Plan</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-3 font-semibold">Feature</th>
+                      <th className="text-center py-3 px-3 font-semibold">Starter</th>
+                      <th className="text-center py-3 px-3 font-semibold">Professional</th>
+                      <th className="text-center py-3 px-3 font-semibold">Enterprise</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Core features (all plans) */}
+                    {['Animal Management', 'Adoption Processing', 'Donation Tracking', 'People & CRM', 'Reports (Basic)', 'Admin & Permissions'].map(f => (
+                      <tr key={f} className="border-b border-border">
+                        <td className="py-2.5 px-3">{f}</td>
+                        <td className="py-2.5 px-3 text-center"><CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" /></td>
+                        <td className="py-2.5 px-3 text-center"><CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" /></td>
+                        <td className="py-2.5 px-3 text-center"><CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" /></td>
+                      </tr>
+                    ))}
+                    {/* Gated features */}
+                    {(Object.keys(FEATURE_LABELS) as GatedFeature[]).map(feature => (
+                      <tr key={feature} className="border-b border-border">
+                        <td className="py-2.5 px-3">{FEATURE_LABELS[feature]}</td>
+                        {(['starter', 'professional', 'enterprise'] as PlanTier[]).map(tier => (
+                          <td key={tier} className="py-2.5 px-3 text-center">
+                            {PLAN_DEFINITIONS[tier].limits.features.includes(feature)
+                              ? <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" />
+                              : <Lock className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
+                            }
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

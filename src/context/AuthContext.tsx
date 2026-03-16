@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Tenant, AppModule, PermissionLevel } from '@/lib/types';
+import type { User, Tenant, AppModule, PermissionLevel, GatedFeature, PlanTier } from '@/lib/types';
 import { canView, canEdit, getPermission, isSuperAdmin } from '@/lib/permissions';
+import { planHasFeature, getPlanInfo } from '@/lib/plans';
 import { mockTenants, mockUsers } from '@/lib/mock-data';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
@@ -28,6 +29,10 @@ interface AuthContextType {
   canEdit: (mod: AppModule) => boolean;
   /** Get the raw permission level for a module. */
   getPermission: (mod: AppModule) => PermissionLevel;
+  /** Check if current tenant's plan includes a gated feature. */
+  hasFeature: (feature: GatedFeature) => boolean;
+  /** Current tenant's plan tier. */
+  planTier: PlanTier;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -43,6 +48,8 @@ const AuthContext = createContext<AuthContextType>({
   canView: () => false,
   canEdit: () => false,
   getPermission: () => 'none',
+  hasFeature: () => false,
+  planTier: 'starter',
 });
 
 /** Ensure mock users have the permissions field. */
@@ -147,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: t.id as string,
           name: t.name as string,
           slug: t.slug as string,
+          plan: (t.plan as PlanTier) ?? 'starter',
           address: (t.address as string) ?? undefined,
           city: (t.city as string) ?? undefined,
           state: (t.state as string) ?? undefined,
@@ -163,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Derived state ──
   const currentTenant = tenants.find(t => t.id === activeTenantId) ?? null;
+  const currentPlan: PlanTier = currentTenant?.plan ?? 'starter';
   const userIsSuperAdmin = isSuperAdmin(currentUser);
   const userIsAdmin = currentUser?.role === 'admin' || userIsSuperAdmin;
 
@@ -206,6 +215,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canView: (mod) => canView(currentUser, mod),
         canEdit: (mod) => canEdit(currentUser, mod),
         getPermission: (mod) => getPermission(currentUser, mod),
+        hasFeature: (feature) => planHasFeature(currentPlan, feature),
+        planTier: currentPlan,
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { UpgradeGate } from '@/components/ui/UpgradeGate';
 import {
   Home,
   Plus,
@@ -148,6 +149,7 @@ export default function FosterPage() {
   ];
 
   return (
+    <UpgradeGate feature="foster_management">
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -340,5 +342,6 @@ export default function FosterPage() {
         </form>
       </Modal>
     </div>
+    </UpgradeGate>
   );
 }
