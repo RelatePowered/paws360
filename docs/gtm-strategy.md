@@ -28,7 +28,7 @@ Better UX but missing key features (no Asilomar reporting, limited CRM, no moves
 Powerful but requires technical staff to deploy and maintain. No commercial support. Steep learning curve.
 
 **ShelterHub (Our Position)**
-Modern, full-featured, affordable. Built-in Asilomar/SAC compliance. CRM with moves management. Multi-tenant. AI-powered social media. Fast onboarding.
+Modern, full-featured, affordable. Built-in Asilomar/SAC compliance. CRM with moves management. Multi-tenant. Auto-generated social media posts. Fast onboarding.
 
 ---
 
@@ -146,11 +146,11 @@ Work with Asilomar Accords stakeholders to position ShelterHub as an officially 
 
 ### Positioning Statement
 
-> ShelterHub is the modern, all-in-one shelter management platform that replaces legacy systems with a fast, intuitive, and affordable tool. Unlike PetPoint and Chameleon, ShelterHub includes Asilomar compliance, SAC grant reporting, donor CRM with moves management, and AI social media generation — all on a modern web platform with multi-tenant support.
+> ShelterHub is the modern, all-in-one shelter management platform that replaces legacy systems with a fast, intuitive, and affordable tool. Unlike PetPoint and Chameleon, ShelterHub includes Asilomar compliance, SAC grant reporting, donor CRM with moves management, and auto-generated social media posts — all on a modern web platform with multi-tenant support.
 
 ### Against Legacy (PetPoint, Chameleon)
 
-"You shouldn't need a 6-month implementation and a $15K contract to manage your shelter. ShelterHub is live in a day, costs a fraction, and has features they still don't offer — like SAC reporting and AI social posts."
+"You shouldn't need a 6-month implementation and a $15K contract to manage your shelter. ShelterHub is live in a day, costs a fraction, and has features they still don't offer — like SAC reporting and auto-generated social posts."
 
 ### Against Mid-Market (ShelterLuv, Pawlytics)
 
@@ -185,7 +185,7 @@ Work with Asilomar Accords stakeholders to position ShelterHub as an officially 
 | Plan | Price | Target | Key Differentiator |
 |------|-------|--------|-------------------|
 | Starter | $49/mo | Small rescues (<100 animals/yr) | Core ops at 80% less than PetPoint |
-| **Professional** | **$149/mo** | Established shelters (100–1K/yr) | Asilomar, SAC, Petfinder, AI posts |
+| **Professional** | **$149/mo** | Established shelters (100–1K/yr) | Asilomar, SAC, Petfinder, social posts |
 | Enterprise | Custom ($400+/mo) | Multi-shelter orgs (1K+/yr) | Multi-tenant, SSO, API, dedicated support |
 
 ### Early Adopter Pricing

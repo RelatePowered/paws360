@@ -98,7 +98,7 @@ export const FEATURE_LABELS: Record<GatedFeature, string> = {
   foster_management: 'Foster Network Management',
   kennel_map: 'Kennel Map',
   vaccination_alerts: 'Vaccination Alerts',
-  social_media_ai: 'AI Social Media Posts',
+  social_media_ai: 'Social Media Post Generator',
   point_of_adoption_donations: 'Point-of-Adoption Donations',
   moves_management: 'Moves Management (CRM)',
   multi_tenant: 'Multi-Tenant Support',

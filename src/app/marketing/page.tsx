@@ -268,8 +268,8 @@ export default function MarketingPage() {
             />
             <FeatureCard
               icon={<Share2 className="w-6 h-6 text-indigo-600" />}
-              title="AI Social Media Posts"
-              description="Generate platform-optimized adoption posts for Facebook, Instagram, and X/Twitter directly from animal profiles. One-click copy with character count awareness for each platform."
+              title="Social Media Post Generator"
+              description="Auto-generate platform-optimized adoption posts for Facebook, Instagram, and X/Twitter from animal profiles. Template-based with one-click copy and character count awareness."
               tag="Differentiator"
             />
             <FeatureCard
@@ -320,7 +320,7 @@ export default function MarketingPage() {
                 <ComparisonRow feature="Moves management (CRM)" us={true} them={false} />
                 <ComparisonRow feature="Petfinder / Adopt-a-Pet export" us={true} them={false} />
                 <ComparisonRow feature="Point-of-adoption donations" us={true} them={false} />
-                <ComparisonRow feature="AI social media generation" us={true} them={false} />
+                <ComparisonRow feature="Social media post generator" us={true} them={false} />
                 <ComparisonRow feature="Adoption application pipeline" us={true} them={false} />
                 <ComparisonRow feature="Vaccination alert dashboard" us={true} them={false} />
                 <ComparisonRow feature="Multi-tenant architecture" us={true} them={false} />
@@ -396,7 +396,7 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Adoption applications pipeline</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Foster network management</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Kennel map &amp; vaccination alerts</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> AI social media posts</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Social media post generator</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 10 staff users</li>
               </ul>
               <Link href="/login" className="block text-center w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25">
@@ -445,8 +445,8 @@ export default function MarketingPage() {
               answer="The Live Release Rate (LRR) is the Asilomar Accords standard for measuring what percentage of shelter animals leave alive. The no-kill benchmark is 90%. ShelterHub automatically calculates this using the official formula (excluding owner-requested euthanasia of unhealthy/untreatable animals), so you always know where you stand."
             />
             <FaqItem
-              question="Do I need Supabase to run ShelterHub?"
-              answer="ShelterHub works with or without Supabase. In development and demo mode, it uses built-in mock data. For production, you connect your own Supabase instance (free tier works for small shelters) and ShelterHub handles all the database schema and row-level security automatically."
+              question="What infrastructure do I need to run ShelterHub?"
+              answer="Nothing — ShelterHub is a fully hosted cloud platform. We handle the infrastructure, database, backups, and security. Just sign up and start using it. For organizations with specific hosting requirements, we also offer self-hosted deployment options on the Enterprise plan."
             />
             <FaqItem
               question="How does multi-tenancy work?"

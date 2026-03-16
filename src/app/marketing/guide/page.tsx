@@ -324,7 +324,7 @@ export default function ProductGuidePage() {
             </ul>
           </ModuleSection>
 
-          <ModuleSection id="social" icon={<Share2 className="w-6 h-6 text-indigo-600" />} title="Social Media" subtitle="AI-generated adoption posts">
+          <ModuleSection id="social" icon={<Share2 className="w-6 h-6 text-indigo-600" />} title="Social Media" subtitle="Auto-generated adoption posts">
             <ul className="space-y-2 my-4 list-none pl-0">
               <KeyCapability text="Select any available animal to generate adoption promotion posts" />
               <KeyCapability text="Platform-optimized posts for Facebook, Instagram, and X/Twitter" />
@@ -364,7 +364,7 @@ export default function ProductGuidePage() {
               <KeyCapability text="Super admins can switch between tenants instantly" />
               <KeyCapability text="Tenant profile: name, address, phone, email" />
               <KeyCapability text="Ideal for humane society networks, rescue coalitions, or multi-location organizations" />
-              <KeyCapability text="Supabase Auth integration with email and optional SSO" />
+              <KeyCapability text="Email and optional SSO authentication" />
             </ul>
           </ModuleSection>
 
