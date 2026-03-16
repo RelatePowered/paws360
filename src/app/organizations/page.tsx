@@ -22,7 +22,7 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
-import { useOrganizations, usePeople, useDonations, mockOrganizations, mockPeople, mockDonations } from '@/hooks/useTenantData';
+import { useOrganizations, usePeople, useDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getRoleBadgeColor } from '@/lib/utils';
 import type { Organization } from '@/lib/types';
 
@@ -45,9 +45,9 @@ function getOrgTypeColor(type: string): string {
 }
 
 export default function OrganizationsPage() {
-  const allOrganizations = useOrganizations(mockOrganizations);
-  const allPeople = usePeople(mockPeople);
-  const allDonations = useDonations(mockDonations);
+  const allOrganizations = useOrganizations();
+  const allPeople = usePeople();
+  const allDonations = useDonations();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);

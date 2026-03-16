@@ -7,15 +7,21 @@ const PUBLIC_ROUTES = ['/login', '/auth/callback', '/marketing', '/api/early-acc
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip auth check when Supabase is not configured (dev/mock mode)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Supabase must be configured — if not, block protected routes
   if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.next();
+    // Allow public routes and the root marketing page through
+    if (pathname === '/' || PUBLIC_ROUTES.some(r => pathname.startsWith(r))) {
+      return NextResponse.next();
+    }
+    // Everything else redirects to root (marketing) when Supabase isn't set up
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Allow public routes through without auth
-  if (PUBLIC_ROUTES.some(r => pathname.startsWith(r))) {
+  // Allow public routes and root marketing page through without auth
+  if (pathname === '/' || PUBLIC_ROUTES.some(r => pathname.startsWith(r))) {
     return NextResponse.next();
   }
 
@@ -40,10 +46,6 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // Not authenticated — send root to marketing, everything else to login
-    if (pathname === '/') {
-      return NextResponse.redirect(new URL('/marketing', request.url));
-    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);

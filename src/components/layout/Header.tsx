@@ -4,8 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Menu, Sun, Moon, Bell, ChevronDown, LogOut, Building2, Shield } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { isSupabaseConfigured } from '@/lib/supabase';
-import { mockUsers } from '@/lib/mock-data';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -27,12 +25,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
     tenants,
     isSuperAdmin,
     switchTenant,
-    switchUser,
     logout,
   } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const demoMode = !isSupabaseConfigured();
 
   // Close menu on outside click
   useEffect(() => {
@@ -151,30 +147,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
                       >
                         <Building2 className="w-3.5 h-3.5" />
                         {t.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Demo mode: user switcher */}
-                {demoMode && (
-                  <div className="p-1 border-b border-border">
-                    <p className="text-xs text-muted uppercase tracking-wider px-2 py-1">Switch User (Demo)</p>
-                    {mockUsers.map(u => (
-                      <button
-                        key={u.id}
-                        onClick={() => { switchUser(u.id); setShowUserMenu(false); }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-surface-hover transition-colors flex items-center justify-between ${
-                          currentUser?.id === u.id ? 'bg-primary/10 text-primary' : ''
-                        }`}
-                      >
-                        <div>
-                          <p className="font-medium">{u.firstName} {u.lastName}</p>
-                          <p className="text-xs text-muted">{u.role} &middot; {u.email}</p>
-                        </div>
-                        {currentUser?.id === u.id && (
-                          <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">Current</span>
-                        )}
                       </button>
                     ))}
                   </div>

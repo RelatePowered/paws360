@@ -3,9 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { User, Tenant, AppModule, PermissionLevel, GatedFeature, PlanTier } from '@/lib/types';
 import { canView, canEdit, getPermission, isSuperAdmin } from '@/lib/permissions';
-import { planHasFeature, getPlanInfo } from '@/lib/plans';
-import { mockTenants, mockUsers } from '@/lib/mock-data';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { planHasFeature } from '@/lib/plans';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
 
 interface AuthContextType {
@@ -18,9 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   /** Switch active tenant (super admin only). */
   switchTenant: (tenantId: string) => void;
-  /** Switch active user — only available in demo (mock) mode. */
-  switchUser: (userId: string) => void;
-  /** Sign out and redirect to login. */
+  /** Sign out and redirect to marketing page. */
   logout: () => void;
   /** Check if user can view a specific module. */
   canView: (mod: AppModule) => boolean;
@@ -42,7 +38,6 @@ const AuthContext = createContext<AuthContextType>({
   isSuperAdmin: false,
   isAuthenticated: false,
   switchTenant: () => {},
-  switchUser: () => {},
   logout: () => {},
   canView: () => false,
   canEdit: () => false,
@@ -51,51 +46,13 @@ const AuthContext = createContext<AuthContextType>({
   planTier: 'starter',
 });
 
-/** Ensure mock users have the permissions field. */
-function withDefaults(user: User | null): User | null {
-  if (!user) return null;
-  if (user.permissions && Object.keys(user.permissions).length > 0) return user;
-  return { ...user, permissions: {} };
-}
-
-/** Restore a mock-mode session from sessionStorage (if any). */
-function restoreMockSession(): { user: User | null; tenantId: string | null } {
-  if (typeof window === 'undefined') return { user: null, tenantId: null };
-  try {
-    const userId = sessionStorage.getItem('mockUserId');
-    if (!userId) return { user: null, tenantId: null };
-    const user = mockUsers.find(u => u.id === userId) ?? null;
-    return { user: withDefaults(user), tenantId: user?.tenantId ?? null };
-  } catch {
-    return { user: null, tenantId: null };
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const supabaseReady = isSupabaseConfigured();
-
-  // ── State ──
-  // In mock mode, start unauthenticated; users must sign in via /login.
-  // The mock session is persisted in sessionStorage so it survives client-side
-  // navigations and soft reloads but not new tabs/browser restarts.
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
-  // Restore mock session on mount (client-side only)
-  useEffect(() => {
-    if (supabaseReady) return;
-    const { user, tenantId } = restoreMockSession();
-    if (user) {
-      setCurrentUser(user);
-      setActiveTenantId(tenantId);
-      setTenants(mockTenants);
-    }
-  }, [supabaseReady]);
-
   // ── Supabase auth session listener ──
   useEffect(() => {
-    if (!supabaseReady) return;
     const supabase = createBrowserSupabase();
     if (!supabase) return;
 
@@ -120,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [supabaseReady]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Load the app-level User row by Supabase auth UID,
@@ -200,30 +157,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveTenantId(tenantId);
   }, [userIsSuperAdmin]);
 
-  const switchUser = useCallback((userId: string) => {
-    if (supabaseReady) return;
-    const user = mockUsers.find(u => u.id === userId) ?? null;
-    if (user) {
-      setCurrentUser(withDefaults(user));
-      setActiveTenantId(user.tenantId);
-      setTenants(mockTenants);
-      try { sessionStorage.setItem('mockUserId', userId); } catch {}
-    }
-  }, [supabaseReady]);
-
   const logout = useCallback(async () => {
-    if (supabaseReady) {
-      const supabase = createBrowserSupabase();
-      await supabase?.auth.signOut();
-    }
+    const supabase = createBrowserSupabase();
+    await supabase?.auth.signOut();
     setCurrentUser(null);
     setActiveTenantId(null);
     setTenants([]);
-    try { sessionStorage.removeItem('mockUserId'); } catch {}
     // Hard redirect to force a full server round-trip through middleware,
     // ensuring cookies are cleared and no stale client state persists.
-    window.location.href = '/marketing';
-  }, [supabaseReady]);
+    window.location.href = '/';
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -235,7 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin: userIsSuperAdmin,
         isAuthenticated: currentUser !== null,
         switchTenant,
-        switchUser,
         logout,
         canView: (mod) => canView(currentUser, mod),
         canEdit: (mod) => canEdit(currentUser, mod),

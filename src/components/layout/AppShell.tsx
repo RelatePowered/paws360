@@ -15,11 +15,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
 
   // Public pages render bare (no shell chrome), no auth required
-  const isPublicRoute = PUBLIC_ROUTES.some(r => pathname.startsWith(r));
+  const isPublicRoute = pathname === '/' || PUBLIC_ROUTES.some(r => pathname.startsWith(r));
 
   useEffect(() => {
     if (!isPublicRoute && !isAuthenticated) {
-      window.location.href = '/marketing';
+      window.location.href = '/';
     }
   }, [isPublicRoute, isAuthenticated]);
 

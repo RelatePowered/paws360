@@ -27,7 +27,6 @@ import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import {
   useAdopters, useAdoptions, useTags, useAnimals, useAdoptionApplications,
-  mockAdopters, mockAdoptions, mockTags, mockAnimals, mockAdoptionApplications,
 } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getSeverityColor } from '@/lib/utils';
 import type { Adopter, Adoption, AdoptionApplication } from '@/lib/types';
@@ -44,11 +43,11 @@ function getAppStatusColor(status: string): string {
 }
 
 export default function AdoptionsPage() {
-  const allAdopters = useAdopters(mockAdopters);
-  const allAdoptions = useAdoptions(mockAdoptions);
-  const allTags = useTags(mockTags);
-  const allAnimals = useAnimals(mockAnimals);
-  const allApplications = useAdoptionApplications(mockAdoptionApplications);
+  const allAdopters = useAdopters();
+  const allAdoptions = useAdoptions();
+  const allTags = useTags();
+  const allAnimals = useAnimals();
+  const allApplications = useAdoptionApplications();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'applications' | 'adopters' | 'adoptions'>('applications');
   const [showAddAdopterModal, setShowAddAdopterModal] = useState(false);

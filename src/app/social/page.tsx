@@ -8,7 +8,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import AnimalPhoto from '@/components/ui/AnimalPhoto';
-import { useAnimals, mockAnimals } from '@/hooks/useTenantData';
+import { useAnimals } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
 import { generatePost, generateAllPlatforms, type SocialPlatform } from '@/lib/social-templates';
 import type { Animal } from '@/lib/types';
@@ -21,7 +21,7 @@ const platformConfig: Record<SocialPlatform, { label: string; icon: typeof Faceb
 };
 
 export default function SocialMediaPage() {
-  const animals = useAnimals(mockAnimals);
+  const animals = useAnimals();
   const { currentTenant } = useAuth();
   const availableAnimals = animals.filter(a => a.status === 'available');
 

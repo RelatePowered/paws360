@@ -27,7 +27,7 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { useAuth } from '@/context/AuthContext';
-import { useUsers, useTags, useAlertRules, mockTags, mockAlertRules, mockUsers } from '@/hooks/useTenantData';
+import { useUsers, useTags, useAlertRules } from '@/hooks/useTenantData';
 import { formatDate, generateId, getSeverityColor } from '@/lib/utils';
 import { PLAN_DEFINITIONS, FEATURE_LABELS, getPlanInfo } from '@/lib/plans';
 import type { AdminTag, AlertRule, User, UserRole, PlanTier, GatedFeature } from '@/lib/types';
@@ -43,10 +43,9 @@ export default function AdminPage() {
 
   const [tab, setTab] = useState<AdminTab>('users');
 
-  // ── Hooks for Supabase-backed data (falls back to mock) ──
-  const fetchedUsers = useUsers(mockUsers.filter(u => u.tenantId === tenantId));
-  const fetchedTags = useTags(mockTags.filter(t => t.tenantId === tenantId));
-  const fetchedRules = useAlertRules(mockAlertRules.filter(r => r.tenantId === tenantId));
+  const fetchedUsers = useUsers();
+  const fetchedTags = useTags();
+  const fetchedRules = useAlertRules();
 
   // ── Tags state ──
   const [tagCategory, setTagCategory] = useState<string>('all');

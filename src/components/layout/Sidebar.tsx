@@ -34,7 +34,7 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, module: 'dashboard' },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
   { name: 'People', href: '/people', icon: Users, module: 'people' },
   { name: 'Animals', href: '/animals', icon: PawPrint, module: 'animals' },
   { name: 'Kennel Map', href: '/kennels', icon: MapPin, module: 'animals', gatedFeature: 'kennel_map' },
@@ -80,7 +80,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-          <Link href="/" className="flex items-center gap-3" onClick={onClose}>
+          <Link href="/dashboard" className="flex items-center gap-3" onClick={onClose}>
             <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
               <PawPrint className="w-5 h-5 text-white" />
             </div>
@@ -100,7 +100,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {visibleNav.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
             const isLocked = item.gatedFeature ? !hasFeature(item.gatedFeature) : false;
             return (
               <Link

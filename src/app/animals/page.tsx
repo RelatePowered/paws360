@@ -26,7 +26,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import AnimalPhoto from '@/components/ui/AnimalPhoto';
 import PhotoUpload from '@/components/ui/PhotoUpload';
 import SocialPostPanel from '@/components/ui/SocialPostPanel';
-import { useAnimals, useMedicalRecords, mockAnimals, mockMedicalRecords } from '@/hooks/useTenantData';
+import { useAnimals, useMedicalRecords } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
 import type { Animal, MedicalRecord } from '@/lib/types';
@@ -106,8 +106,8 @@ function CageCard({ animal }: { animal: Animal }) {
 }
 
 export default function AnimalsPage() {
-  const allAnimals = useAnimals(mockAnimals);
-  const allMedicalRecords = useMedicalRecords(mockMedicalRecords);
+  const allAnimals = useAnimals();
+  const allMedicalRecords = useMedicalRecords();
   const { currentUser, currentTenant } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

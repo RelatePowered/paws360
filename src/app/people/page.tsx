@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
-import { usePeople, useDonations, mockPeople, mockDonations } from '@/hooks/useTenantData';
+import { usePeople, useDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getRoleBadgeColor, getMoveInsight } from '@/lib/utils';
 import type { Person, Move, Donation } from '@/lib/types';
 
@@ -160,8 +160,8 @@ function MovesTimeline({ person, donations }: { person: Person; donations: Donat
 }
 
 export default function PeoplePage() {
-  const allPeople = usePeople(mockPeople);
-  const allDonations = useDonations(mockDonations);
+  const allPeople = usePeople();
+  const allDonations = useDonations();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);

@@ -25,9 +25,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Select, Input } from '@/components/ui/FormField';
-import { usePeople, useAnimals, useDonations, useAdoptions, useTaxLetters, mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/hooks/useTenantData';
+import { usePeople, useAnimals, useDonations, useAdoptions, useTaxLetters } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
-import { buildTaxLetters } from '@/lib/mock-data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { TaxLetterRecord, Animal, AsilomarStats, SacReportRow, AnimalSpecies } from '@/lib/types';
 
@@ -155,15 +154,15 @@ const reportConfigs: Record<ReportType, { title: string; description: string; ic
 
 export default function ReportsPage() {
   const { currentTenant } = useAuth();
-  const allPeople = usePeople(mockPeople);
-  const allAnimals = useAnimals(mockAnimals);
-  const allDonations = useDonations(mockDonations);
-  const allAdoptions = useAdoptions(mockAdoptions);
+  const allPeople = usePeople();
+  const allAnimals = useAnimals();
+  const allDonations = useDonations();
+  const allAdoptions = useAdoptions();
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
 
   // ── Tax Letter State ──
   const [taxYear, setTaxYear] = useState(new Date().getFullYear());
-  const taxLetters = useTaxLetters(taxYear, buildTaxLetters(taxYear));
+  const taxLetters = useTaxLetters(taxYear);
   const [taxTypeFilter, setTaxTypeFilter] = useState<'all' | 'individual' | 'organization'>('all');
   const [previewLetter, setPreviewLetter] = useState<TaxLetterRecord | null>(null);
 

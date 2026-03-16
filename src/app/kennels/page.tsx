@@ -13,13 +13,13 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormField, Input, Select } from '@/components/ui/FormField';
-import { useKennelLocations, useAnimals, mockKennelLocations, mockAnimals } from '@/hooks/useTenantData';
+import { useKennelLocations, useAnimals } from '@/hooks/useTenantData';
 import { getStatusBadgeColor } from '@/lib/utils';
 import type { KennelLocation } from '@/lib/types';
 
 export default function KennelsPage() {
-  const kennels = useKennelLocations(mockKennelLocations);
-  const animals = useAnimals(mockAnimals);
+  const kennels = useKennelLocations();
+  const animals = useAnimals();
   const [zoneFilter, setZoneFilter] = useState('all');
   const [speciesFilter, setSpeciesFilter] = useState('all');
 

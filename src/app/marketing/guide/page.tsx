@@ -87,7 +87,7 @@ export default function ProductGuidePage() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/marketing" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors">
+            <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors">
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Back</span>
             </Link>
@@ -381,7 +381,7 @@ export default function ProductGuidePage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/marketing"
+                href="/"
                 className="inline-flex items-center gap-2 px-6 py-3 border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-indigo-300 transition-colors"
               >
                 Back to Home

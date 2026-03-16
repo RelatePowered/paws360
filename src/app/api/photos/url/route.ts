@@ -3,7 +3,6 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, getS3Bucket, isS3Configured } from '@/lib/s3';
 import { createServerSupabase } from '@/lib/supabase-server';
-import { isSupabaseConfigured } from '@/lib/supabase';
 
 /**
  * GET /api/photos/url?key=...
@@ -19,33 +18,31 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Auth + tenant isolation ──
-  if (isSupabaseConfigured()) {
-    const supabase = await createServerSupabase();
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    }
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const supabase = await createServerSupabase();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    // Fetch the app user to get their tenant
-    const { data: appUser } = await supabase
-      .from('users')
-      .select('tenant_id, role')
-      .eq('auth_uid', authUser.id)
-      .single();
+  // Fetch the app user to get their tenant
+  const { data: appUser } = await supabase
+    .from('users')
+    .select('tenant_id, role')
+    .eq('auth_uid', authUser.id)
+    .single();
 
-    if (!appUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 403 });
-    }
+  if (!appUser) {
+    return NextResponse.json({ error: 'User not found' }, { status: 403 });
+  }
 
-    const row = appUser as Record<string, unknown>;
-    // Enforce tenant isolation: key must start with the user's tenant ID
-    // unless the user is a super_admin
-    if (row.role !== 'super_admin' && !key.startsWith(`${row.tenant_id}/`)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+  const row = appUser as Record<string, unknown>;
+  // Enforce tenant isolation: key must start with the user's tenant ID
+  // unless the user is a super_admin
+  if (row.role !== 'super_admin' && !key.startsWith(`${row.tenant_id}/`)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   if (!isS3Configured()) {

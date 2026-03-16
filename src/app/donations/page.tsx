@@ -19,12 +19,12 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
-import { useDonations, mockDonations } from '@/hooks/useTenantData';
+import { useDonations } from '@/hooks/useTenantData';
 import { formatCurrency, formatDate, getDonationTypeColor } from '@/lib/utils';
 import type { Donation } from '@/lib/types';
 
 export default function DonationsPage() {
-  const allDonations = useDonations(mockDonations);
+  const allDonations = useDonations();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);

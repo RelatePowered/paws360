@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getS3Client, getS3Bucket, isS3Configured } from '@/lib/s3';
 import { createServerSupabase } from '@/lib/supabase-server';
-import { isSupabaseConfigured } from '@/lib/supabase';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -22,15 +21,13 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
  */
 export async function POST(request: NextRequest) {
   // ── Auth check ──
-  if (isSupabaseConfigured()) {
-    const supabase = await createServerSupabase();
-    if (!supabase) {
-      return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const supabase = await createServerSupabase();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   if (!isS3Configured()) {

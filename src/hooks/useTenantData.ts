@@ -22,31 +22,10 @@ import type {
   AdoptionApplication,
 } from '@/lib/types';
 
-// Re-export mock data so pages can still use it for initial renders
-// before Supabase hydrates.
-export {
-  mockPeople,
-  mockAnimals,
-  mockOrganizations,
-  mockDonations,
-  mockAdopters,
-  mockAdoptions,
-  mockTags,
-  mockAlertRules,
-  mockUsers,
-  mockDashboardStats,
-  mockMedicalRecords,
-  mockFosterHomes,
-  mockFosterPlacements,
-  mockKennelLocations,
-  mockAdoptionApplications,
-} from '@/lib/mock-data';
-
 /**
  * Generic hook that fetches tenant-scoped data asynchronously.
  * Falls back to `fallback` for the initial synchronous render, then
- * replaces it with the result of `fetcher` (which may come from
- * Supabase or still be mock data if Supabase isn't configured).
+ * replaces it with the result of `fetcher`.
  */
 function useFetch<T>(fetcher: (tenantId: string) => Promise<T>, fallback: T): T {
   const { currentTenant } = useAuth();

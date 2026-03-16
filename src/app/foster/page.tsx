@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
-import { useFosterHomes, useFosterPlacements, useAnimals, mockFosterHomes, mockFosterPlacements, mockAnimals } from '@/hooks/useTenantData';
+import { useFosterHomes, useFosterPlacements, useAnimals } from '@/hooks/useTenantData';
 import { formatDate } from '@/lib/utils';
 import type { FosterHome, FosterPlacement } from '@/lib/types';
 
@@ -36,9 +36,9 @@ function getPlacementStatusColor(status: string): string {
 }
 
 export default function FosterPage() {
-  const fosterHomes = useFosterHomes(mockFosterHomes);
-  const placements = useFosterPlacements(mockFosterPlacements);
-  const animals = useAnimals(mockAnimals);
+  const fosterHomes = useFosterHomes();
+  const placements = useFosterPlacements();
+  const animals = useAnimals();
   const [tab, setTab] = useState<'homes' | 'placements'>('homes');
   const [selectedHome, setSelectedHome] = useState<FosterHome | null>(null);
   const [showAddHome, setShowAddHome] = useState(false);

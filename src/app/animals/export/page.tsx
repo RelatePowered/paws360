@@ -13,7 +13,7 @@ import {
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useAnimals, mockAnimals } from '@/hooks/useTenantData';
+import { useAnimals } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
 import type { Animal } from '@/lib/types';
 
@@ -138,7 +138,7 @@ function downloadCsv(content: string, filename: string) {
 }
 
 export default function AnimalExportPage() {
-  const allAnimals = useAnimals(mockAnimals);
+  const allAnimals = useAnimals();
   const { currentTenant } = useAuth();
   const shelterName = currentTenant?.name ?? 'Our Shelter';
 
