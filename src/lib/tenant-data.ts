@@ -6,7 +6,8 @@
  * app works without any external dependencies during development.
  */
 
-import { getSupabase } from './supabase';
+import { isSupabaseConfigured } from './supabase';
+import { createBrowserSupabase } from './supabase-browser';
 import {
   mockPeople,
   mockAnimals,
@@ -347,21 +348,21 @@ function rowToAdoption(r: Record<string, unknown>): Adoption {
 // ========== Data access functions ==========
 
 export async function getTenants(): Promise<Tenant[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockTenants;
   const { data } = await sb.from('tenants').select('*').eq('is_active', true);
   return (data ?? []).map(r => rowToTenant(r as Record<string, unknown>));
 }
 
 export async function getUsers(tenantId: string): Promise<User[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockUsers.filter(u => u.tenantId === tenantId);
   const { data } = await sb.from('users').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToUser(r as Record<string, unknown>));
 }
 
 export async function getPeople(tenantId: string): Promise<Person[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockPeople.filter(p => p.tenantId === tenantId);
 
   const [{ data: peopleRows }, { data: moveRows }] = await Promise.all([
@@ -375,28 +376,28 @@ export async function getPeople(tenantId: string): Promise<Person[]> {
 }
 
 export async function getAnimals(tenantId: string): Promise<Animal[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockAnimals.filter(a => a.tenantId === tenantId);
   const { data } = await sb.from('animals').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToAnimal(r as Record<string, unknown>));
 }
 
 export async function getOrganizations(tenantId: string): Promise<Organization[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockOrganizations.filter(o => o.tenantId === tenantId);
   const { data } = await sb.from('organizations').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToOrganization(r as Record<string, unknown>));
 }
 
 export async function getDonations(tenantId: string): Promise<Donation[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockDonations.filter(d => d.tenantId === tenantId);
   const { data } = await sb.from('donations').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToDonation(r as Record<string, unknown>));
 }
 
 export async function getAdopters(tenantId: string): Promise<Adopter[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockAdopters.filter(a => a.tenantId === tenantId);
 
   const [{ data: adopterRows }, { data: noteRows }, { data: adoptionRows }, { data: returnRows }] =
@@ -443,28 +444,28 @@ export async function getAdopters(tenantId: string): Promise<Adopter[]> {
 }
 
 export async function getAdoptions(tenantId: string): Promise<Adoption[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockAdoptions.filter(a => a.tenantId === tenantId);
   const { data } = await sb.from('adoptions').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToAdoption(r as Record<string, unknown>));
 }
 
 export async function getTags(tenantId: string): Promise<AdminTag[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockTags.filter(t => t.tenantId === tenantId);
   const { data } = await sb.from('admin_tags').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToAdminTag(r as Record<string, unknown>));
 }
 
 export async function getAlertRules(tenantId: string): Promise<AlertRule[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockAlertRules.filter(r => r.tenantId === tenantId);
   const { data } = await sb.from('alert_rules').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToAlertRule(r as Record<string, unknown>));
 }
 
 export async function getDashboardStats(tenantId: string): Promise<DashboardStats> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) {
     if (tenantId === 'tenant-1') return mockDashboardStats;
     return {
@@ -520,28 +521,28 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
 }
 
 export async function getMedicalRecords(tenantId: string): Promise<MedicalRecord[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockMedicalRecords.filter(r => r.tenantId === tenantId);
   const { data } = await sb.from('medical_records').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToMedicalRecord(r as Record<string, unknown>));
 }
 
 export async function getFosterHomes(tenantId: string): Promise<FosterHome[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockFosterHomes.filter(h => h.tenantId === tenantId);
   const { data } = await sb.from('foster_homes').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToFosterHome(r as Record<string, unknown>));
 }
 
 export async function getFosterPlacements(tenantId: string): Promise<FosterPlacement[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockFosterPlacements.filter(p => p.tenantId === tenantId);
   const { data } = await sb.from('foster_placements').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToFosterPlacement(r as Record<string, unknown>));
 }
 
 export async function getAdoptionApplications(tenantId: string): Promise<AdoptionApplication[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockAdoptionApplications.filter(a => a.tenantId === tenantId);
   const { data } = await sb.from('adoption_applications').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => {
@@ -579,7 +580,7 @@ export async function getAdoptionApplications(tenantId: string): Promise<Adoptio
 }
 
 export async function getKennelLocations(tenantId: string): Promise<KennelLocation[]> {
-  const sb = getSupabase();
+  const sb = createBrowserSupabase();
   if (!sb) return mockKennelLocations.filter(k => k.tenantId === tenantId);
   const { data } = await sb.from('kennel_locations').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToKennelLocation(r as Record<string, unknown>));
