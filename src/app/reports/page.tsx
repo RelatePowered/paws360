@@ -23,8 +23,11 @@ import {
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { FormField, Select, Input } from '@/components/ui/FormField';
-import { usePeople, useAnimals, useDonations, useAdoptions, mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/hooks/useTenantData';
+import { usePeople, useAnimals, useDonations, useAdoptions, useTaxLetters, mockPeople, mockAnimals, mockDonations, mockAdoptions } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { buildTaxLetters } from '@/lib/mock-data';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { TaxLetterRecord, Animal, AsilomarStats, SacReportRow, AnimalSpecies } from '@/lib/types';
 
@@ -151,11 +154,18 @@ const reportConfigs: Record<ReportType, { title: string; description: string; ic
 };
 
 export default function ReportsPage() {
+  const { currentTenant } = useAuth();
   const allPeople = usePeople(mockPeople);
   const allAnimals = useAnimals(mockAnimals);
   const allDonations = useDonations(mockDonations);
   const allAdoptions = useAdoptions(mockAdoptions);
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
+
+  // ── Tax Letter State ──
+  const [taxYear, setTaxYear] = useState(new Date().getFullYear());
+  const taxLetters = useTaxLetters(taxYear, buildTaxLetters(taxYear));
+  const [taxTypeFilter, setTaxTypeFilter] = useState<'all' | 'individual' | 'organization'>('all');
+  const [previewLetter, setPreviewLetter] = useState<TaxLetterRecord | null>(null);
 
   const totalMonetary = allDonations.filter(d => d.type === 'monetary').reduce((s, d) => s + (d.amount || 0), 0);
   const totalInKind = allDonations.filter(d => d.type === 'in-kind').reduce((s, d) => s + (d.estimatedValue || 0), 0);
@@ -544,6 +554,264 @@ export default function ReportsPage() {
           </CardBody>
         </Card>
       )}
+
+      {/* ════════════ Tax Letters ════════════ */}
+      {selectedReport === 'tax-letters' && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Tax Acknowledgment Letters
+              </h3>
+              <div className="flex items-center gap-3">
+                <FormField label="Tax Year" className="mb-0">
+                  <Select value={taxYear.toString()} onChange={(e) => setTaxYear(parseInt(e.target.value))}>
+                    {[2024, 2023, 2022].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </Select>
+                </FormField>
+                <div className="flex gap-1">
+                  {(['all', 'individual', 'organization'] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setTaxTypeFilter(t)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        taxTypeFilter === t
+                          ? 'bg-primary text-white'
+                          : 'bg-surface-hover text-muted hover:text-foreground'
+                      }`}
+                    >
+                      {t === 'all' ? 'All' : t === 'individual' ? 'Individual' : 'Corporate'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardBody>
+            {/* Summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-center">
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{taxLetters.length}</p>
+                <p className="text-sm text-muted">Total Letters</p>
+              </div>
+              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-center">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {taxLetters.filter(l => l.recipientType === 'individual').length}
+                </p>
+                <p className="text-sm text-muted">Individual Donors</p>
+              </div>
+              <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-center">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {taxLetters.filter(l => l.recipientType === 'organization').length}
+                </p>
+                <p className="text-sm text-muted">Corporate Donors</p>
+              </div>
+            </div>
+
+            {!currentTenant?.ein && (
+              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                <Building2 className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Set your shelter&apos;s EIN and branding in <strong>Admin &rarr; Branding</strong> to include your organization details on tax letters.</span>
+              </div>
+            )}
+
+            {/* Letters List */}
+            <div className="space-y-2">
+              {taxLetters
+                .filter(l => taxTypeFilter === 'all' || l.recipientType === taxTypeFilter)
+                .map(letter => (
+                <div
+                  key={letter.id}
+                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-surface-hover transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      letter.recipientType === 'organization'
+                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    }`}>
+                      {letter.recipientType === 'organization' ? <Building2 className="w-5 h-5" /> : <Users className="w-5 h-5" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{letter.recipientName}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted">
+                        <span>{letter.recipientType === 'organization' ? 'Corporate' : 'Individual'}</span>
+                        {letter.ein && <span>EIN: {letter.ein}</span>}
+                        <span>{letter.donations.length} donation{letter.donations.length !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-bold">{formatCurrency(letter.totalCombined)}</p>
+                      <div className="text-xs text-muted space-x-2">
+                        {letter.totalMonetary > 0 && <span>{formatCurrency(letter.totalMonetary)} cash</span>}
+                        {letter.totalInKind > 0 && <span>{formatCurrency(letter.totalInKind)} in-kind</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setPreviewLetter(letter)}>
+                        <FileText className="w-4 h-4" />
+                        Preview
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setPreviewLetter(letter);
+                        setTimeout(() => window.print(), 300);
+                      }}>
+                        <Printer className="w-4 h-4" />
+                        Print
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {taxLetters.filter(l => taxTypeFilter === 'all' || l.recipientType === taxTypeFilter).length === 0 && (
+                <div className="text-center py-8 text-muted">
+                  <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No donations found for {taxYear}. Tax letters are generated from monetary and in-kind donations.</p>
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Tax Letter Preview/Print Modal */}
+      <Modal open={!!previewLetter} onClose={() => setPreviewLetter(null)} title="Tax Acknowledgment Letter" size="xl">
+        {previewLetter && (
+          <div className="space-y-4">
+            {/* Print-friendly letter content */}
+            <div id="tax-letter-print" className="bg-white dark:bg-slate-900 p-8 rounded-lg border border-border print:border-none print:p-0">
+              {/* Letterhead */}
+              <div className="flex items-start justify-between gap-4 mb-8 pb-6 border-b border-border print:border-gray-300">
+                <div className="flex items-center gap-4">
+                  {currentTenant?.logoUrl && (
+                    <img src={currentTenant.logoUrl} alt={currentTenant.name} className="w-16 h-16 object-contain" />
+                  )}
+                  <div>
+                    <p className="font-bold text-xl">{currentTenant?.name ?? 'Shelter'}</p>
+                    {currentTenant?.address && <p className="text-sm text-muted">{currentTenant.address}</p>}
+                    {(currentTenant?.city || currentTenant?.state) && (
+                      <p className="text-sm text-muted">
+                        {[currentTenant?.city, currentTenant?.state].filter(Boolean).join(', ')} {currentTenant?.zip}
+                      </p>
+                    )}
+                    {currentTenant?.phone && <p className="text-sm text-muted">{currentTenant.phone}</p>}
+                    {currentTenant?.ein && <p className="text-sm text-muted">EIN: {currentTenant.ein}</p>}
+                  </div>
+                </div>
+                <div className="text-right text-xs text-muted shrink-0">
+                  <p className="font-medium">Powered by</p>
+                  <p className="font-bold text-indigo-600 dark:text-indigo-400 text-sm">ShelterHub</p>
+                </div>
+              </div>
+
+              {/* Date */}
+              <p className="text-sm mb-6">
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+
+              {/* Recipient */}
+              <div className="mb-6">
+                <p className="font-medium">{previewLetter.recipientName}</p>
+                {previewLetter.address && <p className="text-sm">{previewLetter.address}</p>}
+              </div>
+
+              {/* Greeting */}
+              <p className="mb-4">
+                Dear {previewLetter.recipientType === 'organization' ? `Friends at ${previewLetter.recipientName}` : previewLetter.recipientName},
+              </p>
+
+              {/* Body */}
+              <p className="mb-4 text-sm leading-relaxed">
+                Thank you for your generous {previewLetter.totalMonetary > 0 && previewLetter.totalInKind > 0 ? 'contributions' : previewLetter.totalMonetary > 0 ? 'donation' : 'in-kind contribution'} to {currentTenant?.name ?? 'our organization'} during the {previewLetter.taxYear} calendar year. Your support directly impacts the lives of animals in our care.
+              </p>
+
+              <p className="mb-4 text-sm leading-relaxed">
+                This letter serves as your official tax acknowledgment for IRS purposes. {currentTenant?.name ?? 'Our organization'} is a 501(c)(3) tax-exempt organization{currentTenant?.ein ? ` (EIN: ${currentTenant.ein})` : ''}. No goods or services were provided in exchange for these contributions unless otherwise noted below.
+              </p>
+
+              {/* Donation Summary Table */}
+              <div className="my-6 border border-border rounded-lg overflow-hidden print:border-gray-300">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-800 print:bg-gray-100">
+                      <th className="text-left py-2 px-4 font-semibold">Date</th>
+                      <th className="text-left py-2 px-4 font-semibold">Description</th>
+                      <th className="text-left py-2 px-4 font-semibold">Type</th>
+                      <th className="text-right py-2 px-4 font-semibold">Amount/Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewLetter.donations.map((d) => (
+                      <tr key={d.id} className="border-t border-border print:border-gray-200">
+                        <td className="py-2 px-4">{formatDate(d.date)}</td>
+                        <td className="py-2 px-4">
+                          {d.description}
+                          {d.itemDescription && <span className="text-muted"> — {d.itemDescription}</span>}
+                        </td>
+                        <td className="py-2 px-4 capitalize">{d.type === 'in-kind' ? 'In-Kind' : 'Cash'}</td>
+                        <td className="py-2 px-4 text-right">{formatCurrency(d.amount || d.estimatedValue || 0)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    {previewLetter.totalMonetary > 0 && (
+                      <tr className="border-t border-border print:border-gray-300 font-medium">
+                        <td colSpan={3} className="py-2 px-4 text-right">Total Cash Donations:</td>
+                        <td className="py-2 px-4 text-right">{formatCurrency(previewLetter.totalMonetary)}</td>
+                      </tr>
+                    )}
+                    {previewLetter.totalInKind > 0 && (
+                      <tr className="border-t border-border print:border-gray-300 font-medium">
+                        <td colSpan={3} className="py-2 px-4 text-right">Total In-Kind Value:</td>
+                        <td className="py-2 px-4 text-right">{formatCurrency(previewLetter.totalInKind)}</td>
+                      </tr>
+                    )}
+                    <tr className="border-t-2 border-border print:border-gray-400 font-bold bg-slate-50 dark:bg-slate-800 print:bg-gray-100">
+                      <td colSpan={3} className="py-2 px-4 text-right">Total Contributions:</td>
+                      <td className="py-2 px-4 text-right">{formatCurrency(previewLetter.totalCombined)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {previewLetter.totalInKind > 0 && (
+                <p className="mb-4 text-xs text-muted leading-relaxed">
+                  Note: For in-kind donations, the estimated value listed above is provided for informational purposes only. The IRS requires donors to determine the fair market value of non-cash contributions for their own tax records.
+                </p>
+              )}
+
+              {/* Closing */}
+              <p className="mb-6 text-sm leading-relaxed">
+                We are deeply grateful for your partnership in our mission to protect and care for animals in need. Please retain this letter for your tax records.
+              </p>
+
+              <div className="mt-8">
+                <p className="text-sm">With gratitude,</p>
+                <div className="mt-6">
+                  <p className="font-medium">{currentTenant?.name ?? 'Shelter'}</p>
+                  {currentTenant?.phone && <p className="text-sm text-muted">{currentTenant.phone}</p>}
+                  {currentTenant?.email && <p className="text-sm text-muted">{currentTenant.email}</p>}
+                  {currentTenant?.website && <p className="text-sm text-muted">{currentTenant.website}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-border print:hidden">
+              <Button variant="outline" onClick={() => setPreviewLetter(null)}>Close</Button>
+              <Button onClick={() => window.print()}>
+                <Printer className="w-4 h-4" />
+                Print Letter
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* SAC Report */}
       {selectedReport === 'sac' && (

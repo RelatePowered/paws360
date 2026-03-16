@@ -46,7 +46,9 @@ export interface Tenant {
   zip?: string;
   phone?: string;
   email?: string;
+  website?: string;
   logoUrl?: string;
+  ein?: string; // Employer Identification Number for tax letter generation
   createdAt: string;
   isActive: boolean;
 }

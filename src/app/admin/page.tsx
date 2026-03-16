@@ -13,6 +13,12 @@ import {
   Users,
   UserCog,
   Mail,
+  Building2,
+  Upload,
+  Globe,
+  Phone,
+  MapPin,
+  Image,
 } from 'lucide-react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -27,7 +33,7 @@ import { PLAN_DEFINITIONS, FEATURE_LABELS, getPlanInfo } from '@/lib/plans';
 import type { AdminTag, AlertRule, User, UserRole, PlanTier, GatedFeature } from '@/lib/types';
 import { CreditCard, CheckCircle2, Lock, Sparkles } from 'lucide-react';
 
-type AdminTab = 'users' | 'tags' | 'rules' | 'plan';
+type AdminTab = 'users' | 'tags' | 'rules' | 'plan' | 'branding';
 
 export default function AdminPage() {
   const { currentTenant, canView: userCanView, canEdit: userCanEdit } = useAuth();
@@ -58,6 +64,26 @@ export default function AdminPage() {
   useEffect(() => { setUsers(fetchedUsers); }, [fetchedUsers]);
   useEffect(() => { setTags(fetchedTags); }, [fetchedTags]);
   useEffect(() => { setRules(fetchedRules); }, [fetchedRules]);
+  // ── Branding state ──
+  const [brandingName, setBrandingName] = useState(currentTenant?.name ?? '');
+  const [brandingAddress, setBrandingAddress] = useState(currentTenant?.address ?? '');
+  const [brandingCity, setBrandingCity] = useState(currentTenant?.city ?? '');
+  const [brandingState, setBrandingState] = useState(currentTenant?.state ?? '');
+  const [brandingZip, setBrandingZip] = useState(currentTenant?.zip ?? '');
+  const [brandingPhone, setBrandingPhone] = useState(currentTenant?.phone ?? '');
+  const [brandingEmail, setBrandingEmail] = useState(currentTenant?.email ?? '');
+  const [brandingWebsite, setBrandingWebsite] = useState(currentTenant?.website ?? '');
+  const [brandingLogoUrl, setBrandingLogoUrl] = useState(currentTenant?.logoUrl ?? '');
+  const [brandingEin, setBrandingEin] = useState(currentTenant?.ein ?? '');
+  const [brandingSaved, setBrandingSaved] = useState(false);
+
+  const handleSaveBranding = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In production this would persist to the database via Supabase
+    setBrandingSaved(true);
+    setTimeout(() => setBrandingSaved(false), 3000);
+  };
+
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
@@ -266,6 +292,14 @@ export default function AdminPage() {
           }`}
         >
           <CreditCard className="w-4 h-4" />Plan
+        </button>
+        <button
+          onClick={() => setTab('branding')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+            tab === 'branding' ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />Branding
         </button>
       </div>
 
@@ -681,6 +715,156 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* ════════════ Branding Tab ════════════ */}
+      {tab === 'branding' && (
+        <div className="space-y-6">
+          <Card>
+            <CardBody>
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                  <Building2 className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Shelter Branding</h3>
+                  <p className="text-sm text-muted">
+                    Configure your shelter&apos;s identity. This information appears on tax letters, reports, and other generated documents alongside the ShelterHub platform branding.
+                  </p>
+                </div>
+              </div>
+
+              <form className="space-y-6" onSubmit={handleSaveBranding}>
+                {/* Logo Section */}
+                <div className="border border-border rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Image className="w-4 h-4 text-muted" />
+                    Shelter Logo
+                  </h4>
+                  <div className="flex items-center gap-6">
+                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center bg-surface-hover overflow-hidden">
+                      {brandingLogoUrl ? (
+                        <img src={brandingLogoUrl} alt="Shelter logo" className="w-full h-full object-contain p-2" />
+                      ) : (
+                        <Upload className="w-8 h-8 text-muted" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <FormField label="Logo URL">
+                        <Input
+                          value={brandingLogoUrl}
+                          onChange={(e) => setBrandingLogoUrl(e.target.value)}
+                          placeholder="https://example.com/logo.png"
+                        />
+                      </FormField>
+                      <p className="text-xs text-muted">Recommended: Square image, at least 200x200px. PNG or SVG with transparent background works best.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Organization Details */}
+                <div className="border border-border rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-muted" />
+                    Organization Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField label="Organization Name" required>
+                      <Input value={brandingName} onChange={(e) => setBrandingName(e.target.value)} required />
+                    </FormField>
+                    <FormField label="EIN (Tax ID)">
+                      <Input value={brandingEin} onChange={(e) => setBrandingEin(e.target.value)} placeholder="XX-XXXXXXX" />
+                    </FormField>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="border border-border rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted" />
+                    Contact Information
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField label="Phone">
+                      <Input value={brandingPhone} onChange={(e) => setBrandingPhone(e.target.value)} placeholder="(555) 123-4567" />
+                    </FormField>
+                    <FormField label="Email">
+                      <Input type="email" value={brandingEmail} onChange={(e) => setBrandingEmail(e.target.value)} placeholder="info@shelter.org" />
+                    </FormField>
+                    <FormField label="Website" className="sm:col-span-2">
+                      <Input value={brandingWebsite} onChange={(e) => setBrandingWebsite(e.target.value)} placeholder="www.shelter.org" />
+                    </FormField>
+                  </div>
+                </div>
+
+                {/* Mailing Address */}
+                <div className="border border-border rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted" />
+                    Mailing Address
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField label="Street Address" className="sm:col-span-2">
+                      <Input value={brandingAddress} onChange={(e) => setBrandingAddress(e.target.value)} placeholder="123 Shelter Rd" />
+                    </FormField>
+                    <FormField label="City">
+                      <Input value={brandingCity} onChange={(e) => setBrandingCity(e.target.value)} />
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField label="State">
+                        <Input value={brandingState} onChange={(e) => setBrandingState(e.target.value)} />
+                      </FormField>
+                      <FormField label="ZIP">
+                        <Input value={brandingZip} onChange={(e) => setBrandingZip(e.target.value)} />
+                      </FormField>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preview + Save */}
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <div>
+                    {brandingSaved && (
+                      <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4" /> Branding settings saved
+                      </p>
+                    )}
+                  </div>
+                  <Button type="submit">Save Branding Settings</Button>
+                </div>
+              </form>
+            </CardBody>
+          </Card>
+
+          {/* Tax Letter Preview */}
+          <Card>
+            <CardBody>
+              <h4 className="text-sm font-semibold mb-3">Letter Header Preview</h4>
+              <div className="border border-border rounded-lg p-6 bg-white dark:bg-slate-900">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    {brandingLogoUrl && (
+                      <img src={brandingLogoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                    )}
+                    <div>
+                      <p className="font-bold text-lg">{brandingName || 'Your Shelter Name'}</p>
+                      {brandingAddress && <p className="text-sm text-muted">{brandingAddress}</p>}
+                      {(brandingCity || brandingState || brandingZip) && (
+                        <p className="text-sm text-muted">{[brandingCity, brandingState].filter(Boolean).join(', ')} {brandingZip}</p>
+                      )}
+                      {brandingPhone && <p className="text-sm text-muted">{brandingPhone}</p>}
+                      {brandingEin && <p className="text-sm text-muted">EIN: {brandingEin}</p>}
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-muted">
+                    <p className="font-medium">Powered by</p>
+                    <p className="font-bold text-primary">ShelterHub</p>
+                  </div>
+                </div>
               </div>
             </CardBody>
           </Card>
