@@ -175,7 +175,7 @@ export default function ProductGuidePage() {
             <ul className="space-y-2 my-4 list-none pl-0">
               <KeyCapability text="Details — all animal info, tags, photo, outcome data, and inline social media post generator" />
               <KeyCapability text="Medical Records — complete medical history sorted by date, with type-colored badges" />
-              <KeyCapability text="Cage Card — print-ready card (4\" wide) with high-contrast layout for posting on kennel doors" />
+              <KeyCapability text="Cage Card — print-ready card (4&quot; wide) with high-contrast layout for posting on kennel doors" />
             </ul>
           </ModuleSection>
 
