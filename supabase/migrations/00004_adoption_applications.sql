@@ -2,9 +2,9 @@
 -- Stores adoption application submissions and their review workflow.
 
 create table if not exists public.adoption_applications (
-  id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
-  animal_id uuid not null references public.animals(id) on delete cascade,
+  id text primary key default gen_random_uuid()::text,
+  tenant_id text not null references public.tenants(id) on delete cascade,
+  animal_id text not null references public.animals(id) on delete cascade,
   animal_name text not null,
   applicant_name text not null,
   applicant_email text not null,
