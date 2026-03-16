@@ -74,11 +74,12 @@ body {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Cage card print styles */
+/* Print styles for cage cards and tax letters */
 @media print {
   body * {
     visibility: hidden;
   }
+  /* Cage cards */
   .cage-card, .cage-card * {
     visibility: visible;
   }
@@ -90,6 +91,23 @@ body {
     font-size: 10pt;
     padding: 8pt;
     border: 2pt solid black;
+  }
+  /* Tax letters */
+  #tax-letter-print, #tax-letter-print * {
+    visibility: visible;
+    color: #000 !important;
+  }
+  #tax-letter-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0.5in;
+    background: white !important;
+    font-size: 11pt;
+  }
+  #tax-letter-print table {
+    border-collapse: collapse;
   }
   [data-print-hide] {
     display: none;
