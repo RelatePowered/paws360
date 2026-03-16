@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 
 /** Routes that render without the sidebar/header shell. */
-const BARE_ROUTES = ['/login', '/auth'];
+const BARE_ROUTES = ['/login', '/auth', '/marketing'];
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
