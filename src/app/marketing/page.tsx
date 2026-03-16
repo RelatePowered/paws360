@@ -45,10 +45,10 @@ function Nav() {
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors">Sign In</Link>
           <Link
-            href="/login"
+            href="/marketing/early-access"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25"
           >
-            Start Free Trial
+            Request Early Access
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -137,10 +137,10 @@ export default function MarketingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/login"
+              href="/marketing/early-access"
               className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-colors shadow-xl shadow-indigo-600/30 text-lg"
             >
-              Start Your Free Trial
+              Request Early Access
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
@@ -376,8 +376,8 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Basic reports</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 2 staff users</li>
               </ul>
-              <Link href="/login" className="block text-center w-full py-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 hover:border-indigo-300 transition-colors">
-                Get Started
+              <Link href="/marketing/early-access" className="block text-center w-full py-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 hover:border-indigo-300 transition-colors">
+                Request Early Access
               </Link>
             </div>
             {/* Professional */}
@@ -399,8 +399,8 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Social media post generator</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 10 staff users</li>
               </ul>
-              <Link href="/login" className="block text-center w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25">
-                Start Free Trial
+              <Link href="/marketing/early-access" className="block text-center w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25">
+                Request Early Access
               </Link>
             </div>
             {/* Enterprise */}
@@ -417,8 +417,8 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Dedicated support</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> Unlimited staff users</li>
               </ul>
-              <Link href="/login" className="block text-center w-full py-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 hover:border-indigo-300 transition-colors">
-                Contact Sales
+              <Link href="/marketing/early-access" className="block text-center w-full py-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 hover:border-indigo-300 transition-colors">
+                Contact Us
               </Link>
             </div>
           </div>
@@ -454,7 +454,7 @@ export default function MarketingPage() {
             />
             <FaqItem
               question="Can I try ShelterHub before committing?"
-              answer="Absolutely. Every plan starts with a 30-day free trial with full access to all features. No credit card required. We also offer extended pilot programs for organizations willing to provide feedback as early adopters."
+              answer="Absolutely. We're currently onboarding early adopter partners with full access to all features. Request early access and our team will get you set up with a personalized walkthrough."
             />
           </div>
         </div>
@@ -469,10 +469,10 @@ export default function MarketingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/login"
+              href="/marketing/early-access"
               className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-colors shadow-xl shadow-indigo-600/30 text-lg"
             >
-              Start Free Trial
+              Request Early Access
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
