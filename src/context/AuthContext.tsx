@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type { User, Tenant, AppModule, PermissionLevel, GatedFeature, PlanTier } from '@/lib/types';
 import { canView, canEdit, getPermission, isSuperAdmin } from '@/lib/permissions';
 import { planHasFeature, getPlanInfo } from '@/lib/plans';
@@ -60,7 +59,6 @@ function withDefaults(user: User | null): User | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const supabaseReady = isSupabaseConfigured();
 
   // ── State ──
@@ -197,8 +195,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setCurrentUser(null);
     setActiveTenantId(null);
-    router.push('/login');
-  }, [supabaseReady, router]);
+    setTenants([]);
+    // Hard redirect to force a full server round-trip through middleware,
+    // ensuring cookies are cleared and no stale client state persists.
+    window.location.href = '/login';
+  }, [supabaseReady]);
 
   return (
     <AuthContext.Provider
@@ -215,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canView: (mod) => canView(currentUser, mod),
         canEdit: (mod) => canEdit(currentUser, mod),
         getPermission: (mod) => getPermission(currentUser, mod),
-        hasFeature: (feature) => planHasFeature(currentPlan, feature),
+        hasFeature: (feature) => userIsSuperAdmin || planHasFeature(currentPlan, feature),
         planTier: currentPlan,
       }}
     >
