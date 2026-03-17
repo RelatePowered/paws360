@@ -5,7 +5,6 @@ import type { User, Tenant, AppModule, PermissionLevel, GatedFeature, PlanTier }
 import { canView, canEdit, getPermission, isSuperAdmin } from '@/lib/permissions';
 import { planHasFeature } from '@/lib/plans';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -57,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Supabase auth session listener ──
+  // ── Auth session listener ──
   useEffect(() => {
     console.log('[Auth] Initializing auth context...');
     const supabase = createBrowserSupabase();
@@ -79,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log(`[Auth] onAuthStateChange event="${event}" hasSession=${!!session} userId=${session?.user?.id ?? 'none'}`);
         try {
           if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-            console.log(`[Auth] Loading app user for auth uid: ${session.user.id} email: ${session.user.email}`);
-            await loadAppUser(supabase, session.user.id, session.user.email);
+            console.log('[Auth] Session active, fetching user profile from /api/auth/me...');
+            await loadAppUser();
           } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
             console.log('[Auth] No session or signed out, clearing state');
             setCurrentUser(null);
@@ -112,91 +111,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
-   * Load the app-level User row by Supabase auth UID,
-   * then load tenants visible to that user.
-   * Falls back to email match if auth_uid isn't linked yet (seed users).
-   * Requires migration 00009 email-based RLS policies to work.
+   * Fetch the app-level user profile via server-side API route.
+   * This avoids browser-side PostgREST calls which hang.
+   * The API route uses the server Supabase client with cookies.
    */
-  async function loadAppUser(supabase: SupabaseClient, authUid: string, authEmail?: string) {
-    console.log(`[Auth] loadAppUser called for authUid=${authUid} email=${authEmail ?? 'unknown'}`);
+  async function loadAppUser() {
+    console.log('[Auth] Calling /api/auth/me...');
+    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    console.log(`[Auth] /api/auth/me response: status=${res.status}`);
 
-    // Try by auth_uid first
-    console.log('[Auth] Querying users table by auth_uid...');
-    let { data: userRow, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth_uid', authUid)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    console.log('[Auth] Users query by auth_uid:', { found: !!userRow, error: userError?.message ?? null });
-
-    // Fallback: match by email (works thanks to users_select_self_by_email RLS policy)
-    if (!userRow && !userError && authEmail) {
-      console.log(`[Auth] Trying email fallback: ${authEmail}`);
-      const { data: emailRow, error: emailError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', authEmail)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      console.log('[Auth] Users query by email:', { found: !!emailRow, error: emailError?.message ?? null });
-
-      if (emailRow && !emailError) {
-        // Link auth_uid for future logins (works thanks to users_update_self_by_email RLS policy)
-        console.log(`[Auth] Linking auth_uid to user id=${(emailRow as Record<string, unknown>).id}`);
-        const { error: linkError } = await supabase
-          .from('users')
-          .update({ auth_uid: authUid } as never)
-          .eq('id', (emailRow as Record<string, unknown>).id as string);
-
-        if (linkError) {
-          console.warn('[Auth] Failed to link auth_uid (non-fatal):', linkError.message);
-        } else {
-          console.log('[Auth] auth_uid linked successfully');
-        }
-        userRow = emailRow;
-      }
-    }
-
-    if (!userRow) {
-      console.warn('[Auth] No user row found by auth_uid or email');
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      console.error('[Auth] /api/auth/me error:', body.error ?? res.statusText);
       setCurrentUser(null);
       return;
     }
 
-    const row = userRow as Record<string, unknown>;
+    const data = await res.json();
+    console.log('[Auth] /api/auth/me data:', { hasUser: !!data.user, tenantCount: data.tenants?.length ?? 0 });
+
+    if (!data.user) {
+      console.warn('[Auth] No user profile returned');
+      setCurrentUser(null);
+      return;
+    }
+
+    const u = data.user;
     const appUser: User = {
-      id: row.id as string,
-      tenantId: row.tenant_id as string,
-      email: row.email as string,
-      firstName: row.first_name as string,
-      lastName: row.last_name as string,
-      role: row.role as User['role'],
-      permissions: (row.permissions as User['permissions']) ?? {},
-      isActive: row.is_active as boolean,
-      createdAt: row.created_at as string,
-      lastLoginAt: (row.last_login_at as string) ?? undefined,
-      authUid: authUid,
+      id: u.id,
+      tenantId: u.tenant_id,
+      email: u.email,
+      firstName: u.first_name,
+      lastName: u.last_name,
+      role: u.role,
+      permissions: u.permissions ?? {},
+      isActive: u.is_active,
+      createdAt: u.created_at,
+      lastLoginAt: u.last_login_at ?? undefined,
+      authUid: u.auth_uid,
     };
 
-    console.log(`[Auth] App user loaded: id=${appUser.id} email=${appUser.email} role=${appUser.role} tenantId=${appUser.tenantId}`);
+    console.log(`[Auth] App user loaded: id=${appUser.id} email=${appUser.email} role=${appUser.role}`);
     setCurrentUser(appUser);
     setActiveTenantId(appUser.tenantId);
 
-    // Load tenant (email-based RLS policy on tenants handles bootstrap)
-    console.log('[Auth] Querying tenants table...');
-    const { data: tenantRows, error: tenantError } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('is_active', true);
-
-    console.log('[Auth] Tenants query:', { count: tenantRows?.length ?? 0, error: tenantError?.message ?? null });
-
-    if (tenantRows) {
+    if (data.tenants?.length) {
       setTenants(
-        (tenantRows as Record<string, unknown>[]).map(t => ({
+        data.tenants.map((t: Record<string, unknown>) => ({
           id: t.id as string,
           name: t.name as string,
           slug: t.slug as string,
