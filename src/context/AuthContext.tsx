@@ -69,15 +69,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // TOKEN_REFRESHED fires when the access token is refreshed.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          await loadAppUser(session.user.id);
-        } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+        try {
+          if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+            await loadAppUser(session.user.id);
+          } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+            setCurrentUser(null);
+            setActiveTenantId(null);
+            setTenants([]);
+          }
+        } catch {
+          // loadAppUser failed (network, RLS, no user row, etc.)
+          // Clear auth state so the user can retry login.
           setCurrentUser(null);
           setActiveTenantId(null);
           setTenants([]);
+        } finally {
+          // Always mark loading done so the UI never gets stuck on the spinner
+          setIsLoading(false);
         }
-        // Always mark loading done after the initial session event
-        setIsLoading(false);
       }
     );
 
@@ -93,14 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
 
     // Fetch user row linked to this auth uid
-    const { data: userRow } = await supabase
+    const { data: userRow, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('auth_uid', authUid)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (!userRow) {
+    if (userError || !userRow) {
       setCurrentUser(null);
       return;
     }
