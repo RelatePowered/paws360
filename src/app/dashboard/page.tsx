@@ -77,7 +77,7 @@ export default function DashboardPage() {
         <StatCard
           title="Avg Length of Stay"
           value={`${stats.averageLengthOfStay}d`}
-          subtitle={`${stats.totalPeople} people, ${stats.volunteerHoursThisMonth}h volunteer`}
+          subtitle={`${stats.availableAnimals} currently available`}
           icon={<Calendar className="w-5 h-5" />}
           iconColor="bg-info/10 text-info"
         />
