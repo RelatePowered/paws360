@@ -63,26 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Load initial session
-    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
-      if (authUser) {
-        await loadAppUser(authUser.id);
-      }
-      setIsLoading(false);
-    }).catch(() => {
-      setIsLoading(false);
-    });
-
-    // Listen for changes (login, logout, token refresh)
+    // Use onAuthStateChange for all session events.
+    // INITIAL_SESSION fires on mount with the current session (or null).
+    // SIGNED_IN fires after login. SIGNED_OUT fires after logout.
+    // TOKEN_REFRESHED fires when the access token is refreshed.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
           await loadAppUser(session.user.id);
-        } else if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
           setCurrentUser(null);
           setActiveTenantId(null);
           setTenants([]);
         }
+        // Always mark loading done after the initial session event
+        setIsLoading(false);
       }
     );
 

@@ -47,8 +47,10 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(next);
-    router.refresh();
+    // Hard redirect ensures the browser sends the freshly-set auth cookies
+    // to the middleware on the very first request. router.push / router.refresh
+    // can race with cookie propagation and cause redirect loops.
+    window.location.href = next;
   }
 
   return (
