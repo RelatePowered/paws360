@@ -1,10 +1,11 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import type { User, Tenant, AppModule, PermissionLevel, GatedFeature, PlanTier } from '@/lib/types';
 import { canView, canEdit, getPermission, isSuperAdmin } from '@/lib/permissions';
 import { planHasFeature } from '@/lib/plans';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -54,54 +55,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Supabase auth session listener ──
   useEffect(() => {
+    console.log('[Auth] Initializing auth context...');
     const supabase = createBrowserSupabase();
     if (!supabase) {
+      console.error('[Auth] createBrowserSupabase() returned null — env vars missing');
       setIsLoading(false);
       return;
     }
+    console.log('[Auth] Supabase client created, setting up onAuthStateChange...');
 
-    // Use onAuthStateChange for all session events.
-    // INITIAL_SESSION fires on mount with the current session (or null).
-    // SIGNED_IN fires after login. SIGNED_OUT fires after logout.
-    // TOKEN_REFRESHED fires when the access token is refreshed.
+    // Safety timeout: if loading hasn't resolved in 15s, force it off
+    loadingTimerRef.current = setTimeout(() => {
+      console.error('[Auth] Safety timeout — forcing isLoading to false after 15s');
+      setIsLoading(false);
+    }, 15000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log(`[Auth] onAuthStateChange event="${event}" hasSession=${!!session} userId=${session?.user?.id ?? 'none'}`);
         try {
           if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-            await loadAppUser(session.user.id);
+            console.log(`[Auth] Loading app user for auth uid: ${session.user.id}`);
+            await loadAppUser(supabase, session.user.id);
           } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+            console.log('[Auth] No session or signed out, clearing state');
             setCurrentUser(null);
             setActiveTenantId(null);
             setTenants([]);
           }
-        } catch {
-          // loadAppUser failed (network, RLS, no user row, etc.)
-          // Clear auth state so the user can retry login.
+        } catch (err) {
+          console.error('[Auth] Error in onAuthStateChange handler:', err);
           setCurrentUser(null);
           setActiveTenantId(null);
           setTenants([]);
         } finally {
-          // Always mark loading done so the UI never gets stuck on the spinner
+          console.log('[Auth] Setting isLoading to false');
+          if (loadingTimerRef.current) {
+            clearTimeout(loadingTimerRef.current);
+            loadingTimerRef.current = null;
+          }
           setIsLoading(false);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Load the app-level User row by Supabase auth UID,
    * then load tenants visible to that user.
+   * Uses the same supabase client instance from the auth listener.
    */
-  async function loadAppUser(authUid: string) {
-    const supabase = createBrowserSupabase();
-    if (!supabase) return;
+  async function loadAppUser(supabase: SupabaseClient, authUid: string) {
+    console.log(`[Auth] loadAppUser called for authUid=${authUid}`);
 
     // Fetch user row linked to this auth uid
+    console.log('[Auth] Querying users table...');
     const { data: userRow, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -109,7 +128,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (userError || !userRow) {
+    console.log('[Auth] Users query result:', { userRow: !!userRow, userError: userError?.message ?? null });
+
+    if (userError) {
+      console.error('[Auth] Users query error:', userError);
+      setCurrentUser(null);
+      return;
+    }
+
+    if (!userRow) {
+      console.warn('[Auth] No user row found for auth_uid — user may not exist in users table');
       setCurrentUser(null);
       return;
     }
@@ -129,14 +157,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authUid: authUid,
     };
 
+    console.log(`[Auth] App user loaded: id=${appUser.id} email=${appUser.email} role=${appUser.role} tenantId=${appUser.tenantId}`);
     setCurrentUser(appUser);
     setActiveTenantId(appUser.tenantId);
 
     // Load tenants visible to this user (RLS handles scoping)
-    const { data: tenantRows } = await supabase
+    console.log('[Auth] Querying tenants table...');
+    const { data: tenantRows, error: tenantError } = await supabase
       .from('tenants')
       .select('*')
       .eq('is_active', true);
+
+    console.log('[Auth] Tenants query result:', { count: tenantRows?.length ?? 0, error: tenantError?.message ?? null });
+
+    if (tenantError) {
+      console.error('[Auth] Tenants query error:', tenantError);
+    }
 
     if (tenantRows) {
       setTenants(
@@ -159,6 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }))
       );
     }
+
+    console.log('[Auth] loadAppUser complete');
   }
 
   // ── Derived state ──
@@ -179,8 +217,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null);
     setActiveTenantId(null);
     setTenants([]);
-    // Hard redirect to force a full server round-trip through middleware,
-    // ensuring cookies are cleared and no stale client state persists.
     window.location.href = '/';
   }, []);
 

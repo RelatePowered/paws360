@@ -21,6 +21,11 @@ import {
   Lock,
   Layers,
   ChevronDown,
+  ClipboardList,
+  TrendingUp,
+  Clock,
+  Eye,
+  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,10 +42,10 @@ function Nav() {
           <span className="text-xl font-bold text-slate-900">ShelterHub</span>
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+          <a href="#problem" className="hover:text-indigo-600 transition-colors">The Problem</a>
           <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
-          <a href="#differentiators" className="hover:text-indigo-600 transition-colors">Why ShelterHub</a>
+          <a href="#how-it-works" className="hover:text-indigo-600 transition-colors">How It Works</a>
           <a href="#pricing" className="hover:text-indigo-600 transition-colors">Pricing</a>
-          <Link href="/marketing/guide" className="hover:text-indigo-600 transition-colors">Product Guide</Link>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors">Sign In</Link>
@@ -48,7 +53,7 @@ function Nav() {
             href="/marketing/early-access"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25"
           >
-            Request Early Access
+            Get a 5-Minute Demo
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -113,6 +118,19 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
+/* ─── Flow Step ─── */
+function FlowStep({ step, label, isLast }: { step: string; label: string; isLast?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+        {step}
+      </div>
+      <span className="text-sm font-semibold text-slate-700">{label}</span>
+      {!isLast && <ArrowRight className="w-4 h-4 text-indigo-300 shrink-0 hidden md:block" />}
+    </div>
+  );
+}
+
 /* ─── Page ─── */
 
 export default function MarketingPage() {
@@ -120,55 +138,232 @@ export default function MarketingPage() {
     <div className="min-h-screen bg-white text-slate-900">
       <Nav />
 
-      {/* Hero */}
+      {/* ═══ HERO ═══ */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-700 text-sm font-semibold mb-8">
             <Star className="w-4 h-4" />
-            Trusted by Dickson County Humane Society
+            Built for humane societies, shelters, and animal welfare organizations
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6">
-            The shelter platform<br />
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">built for impact</span>
+            From Intake to Adoption Reports&mdash;<br />
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">All in One Place</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            ShelterHub replaces spreadsheets, siloed tools, and guesswork with one integrated
-            platform. Track every animal, donor, volunteer, and adoption &mdash; from intake to outcome.
+            Track every animal, service, and outcome without spreadsheets&mdash;and generate
+            grant and impact reports in minutes.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/marketing/early-access"
               className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-colors shadow-xl shadow-indigo-600/30 text-lg"
             >
-              Request Early Access
+              Get a 5-Minute Demo
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link
-              href="/marketing/guide"
+            <a
+              href="#how-it-works"
               className="inline-flex items-center gap-2 px-8 py-4 border-2 border-slate-200 text-slate-700 font-bold rounded-2xl hover:border-indigo-300 hover:text-indigo-700 transition-colors text-lg"
             >
-              Product Guide
-            </Link>
+              See How It Works
+            </a>
+          </div>
+          <p className="text-sm text-slate-400 mt-6">
+            Built for humane societies, shelters, and animal welfare organizations managing real cases and real outcomes.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ PROBLEM SECTION ═══ */}
+      <section id="problem" className="py-24 px-6 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">The Problem</p>
+            <h2 className="text-4xl font-black">Animal care shouldn&apos;t be slowed down by disconnected systems</h2>
+          </div>
+          <p className="text-lg text-slate-600 text-center max-w-3xl mx-auto mb-12 leading-relaxed">
+            Many humane societies are piecing together spreadsheets, paper forms, intake notes,
+            and reporting templates just to manage daily operations. That leads to:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="flex items-start gap-4 p-5 rounded-xl bg-white border border-slate-200">
+              <ClipboardList className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Duplicate data entry</p>
+                <p className="text-sm text-slate-600">The same information re-entered across animals, cases, and reports</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 p-5 rounded-xl bg-white border border-slate-200">
+              <FileSpreadsheet className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Incomplete records</p>
+                <p className="text-sm text-slate-600">Inconsistent data across fragmented systems and spreadsheets</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 p-5 rounded-xl bg-white border border-slate-200">
+              <Clock className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Time-consuming reporting</p>
+                <p className="text-sm text-slate-600">Hours spent assembling reports for grants and board meetings</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 p-5 rounded-xl bg-white border border-slate-200">
+              <Eye className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-900 mb-1">Limited visibility</p>
+                <p className="text-sm text-slate-600">No clear view into outcomes like adoptions, transfers, and returns</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-lg font-semibold text-slate-700 mt-12">
+            Your team is here to care for animals&mdash;not manage fragmented systems.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ SOLUTION SECTION ═══ */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">The Solution</p>
+            <h2 className="text-4xl font-black">One system for your entire animal lifecycle</h2>
+            <p className="text-lg text-slate-600 mt-4 max-w-3xl mx-auto">
+              This platform connects every step of your workflow&mdash;so each animal&apos;s journey
+              is tracked, organized, and ready for reporting at any time.
+            </p>
+          </div>
+          {/* Visual flow */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-10 p-6 rounded-2xl bg-slate-50 border border-slate-200">
+            <FlowStep step="1" label="Intake" />
+            <FlowStep step="2" label="Care & Case Management" />
+            <FlowStep step="3" label="Outcomes" />
+            <FlowStep step="4" label="Reporting" />
+            <FlowStep step="5" label="Grants" isLast />
+          </div>
+          <p className="text-center text-lg font-semibold text-indigo-600">
+            Enter information once. Use it everywhere.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ FEATURES (Reframed as outcomes) ═══ */}
+      <section id="features" className="py-24 px-6 bg-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">What You Get</p>
+            <h2 className="text-4xl font-black">Features that drive outcomes</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <FeatureCard
+              icon={<PawPrint className="w-6 h-6 text-indigo-600" />}
+              title="Track every animal from intake to outcome"
+              description="Capture intake details, medical notes, behavior observations, and status changes in one place. Every animal's journey is documented from arrival to adoption or transfer."
+            />
+            <FeatureCard
+              icon={<Shield className="w-6 h-6 text-indigo-600" />}
+              title="Keep complete, consistent records"
+              description="Ensure every animal's history is accurate and accessible. No more hunting across spreadsheets and paper files for the information you need."
+            />
+            <FeatureCard
+              icon={<BarChart3 className="w-6 h-6 text-indigo-600" />}
+              title="Generate reports in minutes"
+              description="Quickly produce reports for grants, board meetings, and compliance&mdash;without manual spreadsheets. SAC-formatted, Asilomar-compliant, and export-ready."
+            />
+            <FeatureCard
+              icon={<Sparkles className="w-6 h-6 text-indigo-600" />}
+              title="Built-in intelligence"
+              description="Summarize case histories, surface trends, and assist with reporting&mdash;without adding extra work. AI that helps you focus on what matters."
+            />
           </div>
         </div>
       </section>
 
-      {/* Social Proof Stats */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <StatBlock value="13+" label="Core Modules" />
-          <StatBlock value="90%+" label="LRR Benchmark" />
-          <StatBlock value="30%" label="Donation Conversion" />
-          <StatBlock value="0" label="Spreadsheets Needed" />
+      {/* ═══ VALUE / ROI SECTION ═══ */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Impact</p>
+            <h2 className="text-4xl font-black">Save time. Improve care. Strengthen funding readiness.</h2>
+            <p className="text-lg text-slate-600 mt-4 max-w-3xl mx-auto">
+              Organizations using structured systems like this typically:
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <StatBlock value="50-70%" label="Reduction in reporting time" />
+            <StatBlock value="100%" label="Record accuracy across cases" />
+            <StatBlock value="Real-time" label="Adoption & outcome visibility" />
+            <StatBlock value="More" label="Time for animal care" />
+          </div>
         </div>
       </section>
 
-      {/* Table Stakes Features */}
-      <section id="features" className="py-24 px-6">
+      {/* ═══ SOCIAL PROOF ═══ */}
+      <section className="py-24 px-6 bg-indigo-600">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold mb-8">
+            <Star className="w-4 h-4" />
+            Built for Real-World Operations
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white leading-relaxed mb-6">
+            Designed by a technology leader focused on solving real operational challenges
+          </h2>
+          <p className="text-lg text-indigo-100 max-w-2xl mx-auto mb-10">
+            Helping humane societies manage data, improve outcomes, and stay ready for funding opportunities.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold">
+              DC
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-white">Dickson County Humane Society</p>
+              <p className="text-indigo-200 text-sm">Dickson, Tennessee &middot; Founding Partner</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ HOW IT WORKS ═══ */}
+      <section id="how-it-works" className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Getting Started</p>
+            <h2 className="text-4xl font-black">Get started in days, not months</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div className="text-center p-8 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl mx-auto mb-6">
+                1
+              </div>
+              <h3 className="font-bold text-lg mb-3">Set up your intake process</h3>
+              <p className="text-sm text-slate-600">Configure your intake process and animal tracking fields to match your workflow.</p>
+            </div>
+            <div className="text-center p-8 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl mx-auto mb-6">
+                2
+              </div>
+              <h3 className="font-bold text-lg mb-3">Start managing immediately</h3>
+              <p className="text-sm text-slate-600">Begin managing animals, care, and outcomes right away with zero learning curve.</p>
+            </div>
+            <div className="text-center p-8 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl mx-auto mb-6">
+                3
+              </div>
+              <h3 className="font-bold text-lg mb-3">Generate reports automatically</h3>
+              <p className="text-sm text-slate-600">Produce grant-ready reports and insights automatically from your existing data.</p>
+            </div>
+          </div>
+          <p className="text-center text-lg font-semibold text-slate-600">
+            No complex implementation. No bloated systems.
+          </p>
+        </div>
+      </section>
+
+      {/* ═══ FULL FEATURE SET ═══ */}
+      <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Everything You Need</p>
-            <h2 className="text-4xl font-black">Table-stakes features, reimagined</h2>
+            <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Complete Platform</p>
+            <h2 className="text-4xl font-black">Everything your shelter needs</h2>
             <p className="text-slate-600 mt-4 max-w-2xl mx-auto">
               Every feature your shelter relies on &mdash; animal management, donor tracking, adoption processing,
               kennel maps, reports &mdash; all in one modern, intuitive platform.
@@ -224,8 +419,8 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* Differentiators */}
-      <section id="differentiators" className="py-24 px-6 bg-gradient-to-b from-slate-50 to-white">
+      {/* ═══ DIFFERENTIATORS ═══ */}
+      <section className="py-24 px-6 bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Competitive Edge</p>
@@ -294,7 +489,7 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* Comparison Table */}
+      {/* ═══ COMPARISON TABLE ═══ */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
@@ -324,7 +519,7 @@ export default function MarketingPage() {
                 <ComparisonRow feature="Adoption application pipeline" us={true} them={false} />
                 <ComparisonRow feature="Vaccination alert dashboard" us={true} them={false} />
                 <ComparisonRow feature="Multi-tenant architecture" us={true} them={false} />
-                <ComparisonRow feature="Dark mode" us={true} them={false} />
+                <ComparisonRow feature="Built-in AI intelligence" us={true} them={false} />
                 <ComparisonRow feature="Modern responsive UI" us={true} them={false} />
               </tbody>
             </table>
@@ -332,35 +527,15 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* Testimonial / Partner */}
-      <section className="py-24 px-6 bg-indigo-600">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold mb-8">
-            <Star className="w-4 h-4" />
-            Early Adopter Partner
-          </div>
-          <blockquote className="text-2xl md:text-3xl font-bold text-white leading-relaxed mb-8">
-            &ldquo;ShelterHub replaced three different systems and a folder full of spreadsheets.
-            Our Live Release Rate reporting used to take a full day &mdash; now it&apos;s one click.&rdquo;
-          </blockquote>
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold">
-              DC
-            </div>
-            <div className="text-left">
-              <p className="font-bold text-white">Dickson County Humane Society</p>
-              <p className="text-indigo-200 text-sm">Dickson, Tennessee &middot; Founding Partner</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-24 px-6">
+      {/* ═══ PRICING ═══ */}
+      <section id="pricing" className="py-24 px-6 bg-slate-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3">Simple Pricing</p>
-            <h2 className="text-4xl font-black">Plans that grow with your mission</h2>
+            <h2 className="text-4xl font-black">Simple, transparent pricing</h2>
+            <p className="text-slate-600 mt-4 max-w-2xl mx-auto">
+              Accessible for small shelters and scalable for growing organizations.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Starter */}
@@ -377,7 +552,7 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 2 staff users</li>
               </ul>
               <Link href="/marketing/early-access" className="block text-center w-full py-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 hover:border-indigo-300 transition-colors">
-                Request Early Access
+                Request Access
               </Link>
             </div>
             {/* Professional */}
@@ -400,7 +575,7 @@ export default function MarketingPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> 10 staff users</li>
               </ul>
               <Link href="/marketing/early-access" className="block text-center w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25">
-                Request Early Access
+                Request Access
               </Link>
             </div>
             {/* Enterprise */}
@@ -425,8 +600,8 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-24 px-6 bg-slate-50">
+      {/* ═══ FAQ ═══ */}
+      <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-black">Frequently Asked Questions</h2>
@@ -460,32 +635,35 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6">
+      {/* ═══ FINAL CTA ═══ */}
+      <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-black mb-6">Ready to modernize your shelter?</h2>
+          <h2 className="text-4xl font-black mb-6">
+            Spend less time managing records&mdash;and more time caring for animals
+          </h2>
           <p className="text-lg text-slate-600 mb-10">
-            Join Dickson County Humane Society and shelters across the country using ShelterHub to save more animals, raise more funds, and run more efficiently.
+            Join shelters across the country using ShelterHub to save more animals,
+            raise more funds, and run more efficiently.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/marketing/early-access"
               className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-colors shadow-xl shadow-indigo-600/30 text-lg"
             >
-              Request Early Access
+              Book a Demo
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link
-              href="/marketing/guide"
+            <a
+              href="#how-it-works"
               className="inline-flex items-center gap-2 px-8 py-4 border-2 border-slate-200 text-slate-700 font-bold rounded-2xl hover:border-indigo-300 hover:text-indigo-700 transition-colors text-lg"
             >
-              Read the Product Guide
-            </Link>
+              See It in Action
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ═══ FOOTER ═══ */}
       <footer className="border-t border-slate-200 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
@@ -495,8 +673,8 @@ export default function MarketingPage() {
             <span className="font-bold text-slate-900">ShelterHub</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-slate-500">
-            <Link href="/marketing/guide" className="hover:text-indigo-600">Product Guide</Link>
-
+            <a href="#features" className="hover:text-indigo-600">Features</a>
+            <a href="#how-it-works" className="hover:text-indigo-600">How It Works</a>
             <a href="#pricing" className="hover:text-indigo-600">Pricing</a>
             <Link href="/login" className="hover:text-indigo-600">Sign In</Link>
           </div>
