@@ -79,8 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log(`[Auth] onAuthStateChange event="${event}" hasSession=${!!session} userId=${session?.user?.id ?? 'none'}`);
         try {
           if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-            console.log(`[Auth] Loading app user for auth uid: ${session.user.id}`);
-            await loadAppUser(supabase, session.user.id);
+            console.log(`[Auth] Loading app user for auth uid: ${session.user.id} email: ${session.user.email}`);
+            await loadAppUser(supabase, session.user.id, session.user.email);
           } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
             console.log('[Auth] No session or signed out, clearing state');
             setCurrentUser(null);
@@ -116,28 +116,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * then load tenants visible to that user.
    * Uses the same supabase client instance from the auth listener.
    */
-  async function loadAppUser(supabase: SupabaseClient, authUid: string) {
-    console.log(`[Auth] loadAppUser called for authUid=${authUid}`);
+  async function loadAppUser(supabase: SupabaseClient, authUid: string, authEmail?: string) {
+    console.log(`[Auth] loadAppUser called for authUid=${authUid} email=${authEmail ?? 'unknown'}`);
 
     // Fetch user row linked to this auth uid
-    console.log('[Auth] Querying users table...');
-    const { data: userRow, error: userError } = await supabase
+    console.log('[Auth] Querying users table by auth_uid...');
+    let { data: userRow, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('auth_uid', authUid)
       .eq('is_active', true)
       .maybeSingle();
 
-    console.log('[Auth] Users query result:', { userRow: !!userRow, userError: userError?.message ?? null });
+    console.log('[Auth] Users query by auth_uid result:', { userRow: !!userRow, userError: userError?.message ?? null });
 
     if (userError) {
       console.error('[Auth] Users query error:', userError);
-      setCurrentUser(null);
-      return;
+    }
+
+    // If no row matched by auth_uid, try matching by email and auto-link.
+    // This handles seed users or manually-created users that don't have auth_uid set yet.
+    if (!userRow && authEmail) {
+      console.log(`[Auth] No user found by auth_uid, trying email match: ${authEmail}`);
+      const { data: emailRow, error: emailError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', authEmail)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      console.log('[Auth] Users query by email result:', { emailRow: !!emailRow, emailError: emailError?.message ?? null });
+
+      if (emailRow && !emailError) {
+        // Auto-link the auth_uid so future logins match directly
+        console.log(`[Auth] Linking auth_uid to user row id=${(emailRow as Record<string, unknown>).id}`);
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ auth_uid: authUid } as never)
+          .eq('id', (emailRow as Record<string, unknown>).id as string);
+
+        if (updateError) {
+          console.error('[Auth] Failed to link auth_uid:', updateError.message);
+        } else {
+          console.log('[Auth] Successfully linked auth_uid');
+        }
+        userRow = emailRow;
+      }
     }
 
     if (!userRow) {
-      console.warn('[Auth] No user row found for auth_uid — user may not exist in users table');
+      console.warn('[Auth] No user row found by auth_uid or email — user does not exist in users table');
       setCurrentUser(null);
       return;
     }
