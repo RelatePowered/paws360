@@ -103,12 +103,15 @@ export default function FosterPage() {
     {
       key: 'animal',
       header: 'Animal',
-      render: (p: FosterPlacement) => (
-        <div>
-          <p className="font-medium">{p.animalName}</p>
-          <p className="text-xs text-muted">{p.animalId}</p>
-        </div>
-      ),
+      render: (p: FosterPlacement) => {
+        const animal = animals.find(a => a.id === p.animalId);
+        return (
+          <div>
+            <p className="font-medium">{p.animalName}</p>
+            <p className="text-xs text-muted font-mono">{animal?.animalId ?? '—'}</p>
+          </div>
+        );
+      },
     },
     {
       key: 'foster',

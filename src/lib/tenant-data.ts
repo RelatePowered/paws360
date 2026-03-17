@@ -324,6 +324,7 @@ function rowToAdoption(r: Record<string, unknown>): Adoption {
     status: r.status as Adoption['status'],
     returnDate: r.return_date as string | undefined,
     returnReason: r.return_reason as string | undefined,
+    checkoutDonation: r.checkout_donation != null ? Number(r.checkout_donation) : undefined,
   };
 }
 
@@ -357,18 +358,23 @@ export async function updateTenant(
   }>
 ): Promise<void> {
   const sb = getSupabase();
-  // Map camelCase fields to snake_case DB columns
+  // Map camelCase fields to snake_case DB columns.
+  // Convert empty strings to null so optional DB columns don't receive
+  // invalid empty values (e.g. email format constraints, EIN checks).
+  const toNullable = (v: string | undefined): string | null =>
+    v === undefined ? null : (v.trim() === '' ? null : v.trim());
+
   const row: Record<string, unknown> = {};
-  if (fields.name !== undefined) row.name = fields.name;
-  if (fields.address !== undefined) row.address = fields.address;
-  if (fields.city !== undefined) row.city = fields.city;
-  if (fields.state !== undefined) row.state = fields.state;
-  if (fields.zip !== undefined) row.zip = fields.zip;
-  if (fields.phone !== undefined) row.phone = fields.phone;
-  if (fields.email !== undefined) row.email = fields.email;
-  if (fields.logoUrl !== undefined) row.logo_url = fields.logoUrl;
-  if (fields.website !== undefined) row.website = fields.website;
-  if (fields.ein !== undefined) row.ein = fields.ein;
+  if (fields.name !== undefined) row.name = fields.name || null;
+  if (fields.address !== undefined) row.address = toNullable(fields.address);
+  if (fields.city !== undefined) row.city = toNullable(fields.city);
+  if (fields.state !== undefined) row.state = toNullable(fields.state);
+  if (fields.zip !== undefined) row.zip = toNullable(fields.zip);
+  if (fields.phone !== undefined) row.phone = toNullable(fields.phone);
+  if (fields.email !== undefined) row.email = toNullable(fields.email);
+  if (fields.logoUrl !== undefined) row.logo_url = toNullable(fields.logoUrl);
+  if (fields.website !== undefined) row.website = toNullable(fields.website);
+  if (fields.ein !== undefined) row.ein = toNullable(fields.ein);
   const { error } = await sb.from('tenants').update(row as Record<string, unknown> as never).eq('id', tenantId);
   if (error) throw error;
 }
@@ -494,6 +500,37 @@ export async function getAdoptions(tenantId: string): Promise<Adoption[]> {
   return (data ?? []).map(r => rowToAdoption(r as Record<string, unknown>));
 }
 
+export async function createAdoption(
+  tenantId: string,
+  input: {
+    animalId: string;
+    animalName: string;
+    adopterId: string;
+    adopterName: string;
+    date: string;
+    fee: number;
+    checkoutDonation?: number;
+  }
+): Promise<Adoption> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const row = {
+    id,
+    tenant_id: tenantId,
+    animal_id: input.animalId,
+    animal_name: input.animalName,
+    adopter_id: input.adopterId,
+    adopter_name: input.adopterName,
+    date: input.date,
+    fee: input.fee,
+    status: 'completed',
+    checkout_donation: input.checkoutDonation ?? null,
+  };
+  const { error } = await sb.from('adoptions').insert(row as never);
+  if (error) throw error;
+  return rowToAdoption(row as Record<string, unknown>);
+}
+
 export async function getTags(tenantId: string): Promise<AdminTag[]> {
   const sb = getSupabase();
   const { data } = await sb.from('admin_tags').select('*').eq('tenant_id', tenantId);
@@ -510,16 +547,18 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
   const sb = getSupabase();
 
   // Compute stats from live data
-  const [people, animals, donations, adopters] = await Promise.all([
+  const [people, animals, donations, adopters, adoptions] = await Promise.all([
     getPeople(tenantId),
     getAnimals(tenantId),
     getDonations(tenantId),
     getAdopters(tenantId),
+    getAdoptions(tenantId),
   ]);
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const monthDonations = donations.filter(d => d.date.startsWith(thisMonth));
+  const monthAdoptions = adoptions.filter(a => a.date.startsWith(thisMonth) && a.status === 'completed');
 
   const animalsInFoster = animals.filter(a => a.status === 'foster').length;
   const liveStatuses = ['adopted', 'available', 'foster', 'transferred'];
@@ -543,7 +582,7 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
     totalVolunteers: people.filter(p => p.roles.includes('volunteer')).length,
     totalAnimals: animals.length,
     availableAnimals: animals.filter(a => a.status === 'available').length,
-    adoptionsThisMonth: 0,
+    adoptionsThisMonth: monthAdoptions.length,
     donationsThisMonth: monthDonations.reduce((s, d) => s + (d.amount ?? d.estimatedValue ?? 0), 0),
     volunteerHoursThisMonth: monthDonations.filter(d => d.type === 'time').reduce((s, d) => s + (d.hours ?? 0), 0),
     flaggedAdopters: adopters.filter(a => a.flagged).length,
