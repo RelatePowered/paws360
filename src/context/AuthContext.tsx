@@ -114,52 +114,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Load the app-level User row by Supabase auth UID,
    * then load tenants visible to that user.
-   * Uses a security-definer RPC to bypass RLS chicken-and-egg:
-   * RLS policies depend on auth_uid being set, but seed/manual users
-   * may not have it set yet. The RPC handles lookup + auto-linking.
+   * Falls back to email match if auth_uid isn't linked yet (seed users).
+   * Requires migration 00009 email-based RLS policies to work.
    */
   async function loadAppUser(supabase: SupabaseClient, authUid: string, authEmail?: string) {
     console.log(`[Auth] loadAppUser called for authUid=${authUid} email=${authEmail ?? 'unknown'}`);
 
-    // Call the security-definer RPC that bypasses RLS
-    console.log('[Auth] Calling resolve_auth_user RPC...');
-    const { data: result, error: rpcError } = await supabase
-      .rpc('resolve_auth_user', {
-        p_auth_uid: authUid,
-        p_email: authEmail ?? '',
-      });
+    // Try by auth_uid first
+    console.log('[Auth] Querying users table by auth_uid...');
+    let { data: userRow, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_uid', authUid)
+      .eq('is_active', true)
+      .maybeSingle();
 
-    console.log('[Auth] resolve_auth_user result:', {
-      hasResult: !!result,
-      hasUser: !!result?.user,
-      hasTenant: !!result?.tenant,
-      error: rpcError?.message ?? null,
-    });
+    console.log('[Auth] Users query by auth_uid:', { found: !!userRow, error: userError?.message ?? null });
 
-    if (rpcError) {
-      console.error('[Auth] resolve_auth_user RPC error:', rpcError);
+    // Fallback: match by email (works thanks to users_select_self_by_email RLS policy)
+    if (!userRow && !userError && authEmail) {
+      console.log(`[Auth] Trying email fallback: ${authEmail}`);
+      const { data: emailRow, error: emailError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', authEmail)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      console.log('[Auth] Users query by email:', { found: !!emailRow, error: emailError?.message ?? null });
+
+      if (emailRow && !emailError) {
+        // Link auth_uid for future logins (works thanks to users_update_self_by_email RLS policy)
+        console.log(`[Auth] Linking auth_uid to user id=${(emailRow as Record<string, unknown>).id}`);
+        const { error: linkError } = await supabase
+          .from('users')
+          .update({ auth_uid: authUid } as never)
+          .eq('id', (emailRow as Record<string, unknown>).id as string);
+
+        if (linkError) {
+          console.warn('[Auth] Failed to link auth_uid (non-fatal):', linkError.message);
+        } else {
+          console.log('[Auth] auth_uid linked successfully');
+        }
+        userRow = emailRow;
+      }
+    }
+
+    if (!userRow) {
+      console.warn('[Auth] No user row found by auth_uid or email');
       setCurrentUser(null);
       return;
     }
 
-    if (!result || !result.user) {
-      console.warn('[Auth] No user found by auth_uid or email — user does not exist in users table');
-      setCurrentUser(null);
-      return;
-    }
-
-    const u = result.user;
+    const row = userRow as Record<string, unknown>;
     const appUser: User = {
-      id: u.id,
-      tenantId: u.tenant_id,
-      email: u.email,
-      firstName: u.first_name,
-      lastName: u.last_name,
-      role: u.role,
-      permissions: u.permissions ?? {},
-      isActive: u.is_active,
-      createdAt: u.created_at,
-      lastLoginAt: u.last_login_at ?? undefined,
+      id: row.id as string,
+      tenantId: row.tenant_id as string,
+      email: row.email as string,
+      firstName: row.first_name as string,
+      lastName: row.last_name as string,
+      role: row.role as User['role'],
+      permissions: (row.permissions as User['permissions']) ?? {},
+      isActive: row.is_active as boolean,
+      createdAt: row.created_at as string,
+      lastLoginAt: (row.last_login_at as string) ?? undefined,
       authUid: authUid,
     };
 
@@ -167,26 +185,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(appUser);
     setActiveTenantId(appUser.tenantId);
 
-    // Set tenant from the RPC result
-    const t = result.tenant;
-    if (t) {
-      setTenants([{
-        id: t.id,
-        name: t.name,
-        slug: t.slug,
-        plan: t.plan ?? 'starter',
-        address: t.address ?? undefined,
-        city: t.city ?? undefined,
-        state: t.state ?? undefined,
-        zip: t.zip ?? undefined,
-        phone: t.phone ?? undefined,
-        email: t.email ?? undefined,
-        logoUrl: t.logo_url ?? undefined,
-        website: t.website ?? undefined,
-        ein: t.ein ?? undefined,
-        createdAt: t.created_at,
-        isActive: t.is_active,
-      }]);
+    // Load tenant (email-based RLS policy on tenants handles bootstrap)
+    console.log('[Auth] Querying tenants table...');
+    const { data: tenantRows, error: tenantError } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('is_active', true);
+
+    console.log('[Auth] Tenants query:', { count: tenantRows?.length ?? 0, error: tenantError?.message ?? null });
+
+    if (tenantRows) {
+      setTenants(
+        (tenantRows as Record<string, unknown>[]).map(t => ({
+          id: t.id as string,
+          name: t.name as string,
+          slug: t.slug as string,
+          plan: (t.plan as PlanTier) ?? 'starter',
+          address: (t.address as string) ?? undefined,
+          city: (t.city as string) ?? undefined,
+          state: (t.state as string) ?? undefined,
+          zip: (t.zip as string) ?? undefined,
+          phone: (t.phone as string) ?? undefined,
+          email: (t.email as string) ?? undefined,
+          logoUrl: (t.logo_url as string) ?? undefined,
+          website: (t.website as string) ?? undefined,
+          ein: (t.ein as string) ?? undefined,
+          createdAt: t.created_at as string,
+          isActive: t.is_active as boolean,
+        }))
+      );
     }
 
     console.log('[Auth] loadAppUser complete');
