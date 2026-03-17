@@ -28,6 +28,8 @@ import { DataTable } from '@/components/ui/DataTable';
 import {
   useAdopters, useAdoptions, useTags, useAnimals, useAdoptionApplications,
 } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createAdoption } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getSeverityColor } from '@/lib/utils';
 import type { Adopter, Adoption, AdoptionApplication } from '@/lib/types';
 
@@ -44,10 +46,13 @@ function getAppStatusColor(status: string): string {
 
 export default function AdoptionsPage() {
   const allAdopters = useAdopters();
-  const allAdoptions = useAdoptions();
+  const fetchedAdoptions = useAdoptions();
   const allTags = useTags();
   const allAnimals = useAnimals();
   const allApplications = useAdoptionApplications();
+  const { currentTenant } = useAuth();
+  const [localAdoptions, setLocalAdoptions] = useState<Adoption[]>([]);
+  const allAdoptions = [...localAdoptions, ...fetchedAdoptions];
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'applications' | 'adopters' | 'adoptions'>('applications');
   const [showAddAdopterModal, setShowAddAdopterModal] = useState(false);
@@ -57,6 +62,54 @@ export default function AdoptionsPage() {
   const [selectedApp, setSelectedApp] = useState<AdoptionApplication | null>(null);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [noteAdopter, setNoteAdopter] = useState<Adopter | null>(null);
+
+  // New adoption form state
+  const [adoptionAnimalId, setAdoptionAnimalId] = useState('');
+  const [adoptionAdopterId, setAdoptionAdopterId] = useState('');
+  const [adoptionDate, setAdoptionDate] = useState('');
+  const [adoptionFee, setAdoptionFee] = useState('');
+  const [checkoutDonation, setCheckoutDonation] = useState('');
+  const [adoptionSaving, setAdoptionSaving] = useState(false);
+  const [adoptionError, setAdoptionError] = useState<string | null>(null);
+
+  function resetAdoptionForm() {
+    setAdoptionAnimalId('');
+    setAdoptionAdopterId('');
+    setAdoptionDate('');
+    setAdoptionFee('');
+    setCheckoutDonation('');
+    setAdoptionError(null);
+  }
+
+  async function handleFinalizeAdoption(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    const animal = allAnimals.find(a => a.id === adoptionAnimalId);
+    const adopter = allAdopters.find(a => a.id === adoptionAdopterId);
+    if (!animal || !adopter) return;
+
+    setAdoptionSaving(true);
+    setAdoptionError(null);
+    try {
+      const donation = parseFloat(checkoutDonation);
+      const adoption = await createAdoption(currentTenant.id, {
+        animalId: animal.id,
+        animalName: animal.name,
+        adopterId: adopter.id,
+        adopterName: `${adopter.firstName} ${adopter.lastName}`,
+        date: adoptionDate,
+        fee: parseFloat(adoptionFee),
+        checkoutDonation: !isNaN(donation) && donation > 0 ? donation : undefined,
+      });
+      setLocalAdoptions(prev => [adoption, ...prev]);
+      setShowCheckoutModal(false);
+      resetAdoptionForm();
+    } catch (err) {
+      setAdoptionError(err instanceof Error ? err.message : 'Failed to save adoption');
+    } finally {
+      setAdoptionSaving(false);
+    }
+  }
 
   const adopterAlertTags = allTags.filter(t => t.category === 'adopter');
   const availableAnimals = allAnimals.filter(a => a.status === 'available');
@@ -644,10 +697,13 @@ export default function AdoptionsPage() {
       </Modal>
 
       {/* Add Adoption Modal with Checkout Donation */}
-      <Modal open={showAddAdoptionModal} onClose={() => setShowAddAdoptionModal(false)} title="New Adoption" size="md">
+      <Modal open={showAddAdoptionModal} onClose={() => { setShowAddAdoptionModal(false); resetAdoptionForm(); }} title="New Adoption" size="md">
         <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddAdoptionModal(false); setShowCheckoutModal(true); }}>
+          {adoptionError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{adoptionError}</div>
+          )}
           <FormField label="Animal" required>
-            <Select required>
+            <Select required value={adoptionAnimalId} onChange={e => setAdoptionAnimalId(e.target.value)}>
               <option value="">Select animal...</option>
               {availableAnimals.map(a => (
                 <option key={a.id} value={a.id}>{a.animalId} - {a.name} ({a.breed})</option>
@@ -655,7 +711,7 @@ export default function AdoptionsPage() {
             </Select>
           </FormField>
           <FormField label="Adopter" required>
-            <Select required>
+            <Select required value={adoptionAdopterId} onChange={e => setAdoptionAdopterId(e.target.value)}>
               <option value="">Select adopter...</option>
               {allAdopters.map(a => (
                 <option key={a.id} value={a.id}>
@@ -665,11 +721,11 @@ export default function AdoptionsPage() {
             </Select>
           </FormField>
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Adoption Date" required><Input type="date" required /></FormField>
-            <FormField label="Adoption Fee ($)" required><Input type="number" step="0.01" placeholder="0.00" required /></FormField>
+            <FormField label="Adoption Date" required><Input type="date" required value={adoptionDate} onChange={e => setAdoptionDate(e.target.value)} /></FormField>
+            <FormField label="Adoption Fee ($)" required><Input type="number" step="0.01" placeholder="0.00" required value={adoptionFee} onChange={e => setAdoptionFee(e.target.value)} /></FormField>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddAdoptionModal(false)}>Cancel</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddAdoptionModal(false); resetAdoptionForm(); }}>Cancel</Button>
             <Button type="submit">Continue to Checkout</Button>
           </div>
         </form>
@@ -677,7 +733,10 @@ export default function AdoptionsPage() {
 
       {/* Point-of-Adoption Donation Modal */}
       <Modal open={showCheckoutModal} onClose={() => setShowCheckoutModal(false)} title="Adoption Checkout" size="md">
-        <form className="space-y-6" onSubmit={e => { e.preventDefault(); setShowCheckoutModal(false); }}>
+        <form className="space-y-6" onSubmit={handleFinalizeAdoption}>
+          {adoptionError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{adoptionError}</div>
+          )}
           <div className="text-center p-6 rounded-lg bg-primary/5 border border-primary/20">
             <Heart className="w-8 h-8 text-primary mx-auto mb-2" />
             <h3 className="text-lg font-bold">Adoption Complete!</h3>
@@ -693,14 +752,25 @@ export default function AdoptionsPage() {
                 <button
                   key={amount}
                   type="button"
-                  className="p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 text-center transition-colors"
+                  onClick={() => setCheckoutDonation(String(amount))}
+                  className={`p-3 rounded-lg border text-center transition-colors ${
+                    checkoutDonation === String(amount)
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
+                      : 'border-border hover:border-primary hover:bg-primary/5'
+                  }`}
                 >
                   <p className="text-lg font-bold">${amount}</p>
                 </button>
               ))}
             </div>
             <FormField label="Custom amount">
-              <Input type="number" step="0.01" placeholder="Other amount..." />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Other amount..."
+                value={checkoutDonation}
+                onChange={e => setCheckoutDonation(e.target.value)}
+              />
             </FormField>
           </div>
 
@@ -712,12 +782,12 @@ export default function AdoptionsPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowCheckoutModal(false)}>
+            <Button variant="outline" type="button" onClick={() => { setCheckoutDonation(''); handleFinalizeAdoption({ preventDefault: () => {} } as React.FormEvent); }} disabled={adoptionSaving}>
               Skip — No Donation
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={adoptionSaving}>
               <DollarSign className="w-4 h-4" />
-              Complete with Donation
+              {adoptionSaving ? 'Saving...' : 'Complete with Donation'}
             </Button>
           </div>
         </form>
