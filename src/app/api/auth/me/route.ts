@@ -38,9 +38,7 @@ export async function GET() {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (userError) {
-      console.error('[api/auth/me] Users query by auth_uid error:', userError.message);
-    }
+    if (userError) { /* query error */ }
 
     // Fallback: match by email and auto-link auth_uid
     if (!userRow && authEmail) {
@@ -51,9 +49,7 @@ export async function GET() {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (emailError) {
-        console.error('[api/auth/me] Users query by email error:', emailError.message);
-      }
+      if (emailError) { /* query error */ }
 
       if (emailRow && !emailError) {
         // Auto-link auth_uid
@@ -62,9 +58,7 @@ export async function GET() {
           .update({ auth_uid: authUid } as never)
           .eq('id', (emailRow as Record<string, unknown>).id as string);
 
-        if (linkError) {
-          console.error('[api/auth/me] Failed to link auth_uid:', linkError.message);
-        }
+        if (linkError) { /* link error */ }
         userRow = emailRow;
       }
     }
@@ -80,9 +74,7 @@ export async function GET() {
       .select('*')
       .eq('is_active', true);
 
-    if (tenantError) {
-      console.error('[api/auth/me] Tenants query error:', tenantError.message);
-    }
+    if (tenantError) { /* query error */ }
 
     return NextResponse.json({
       user: {
@@ -117,7 +109,6 @@ export async function GET() {
       })),
     });
   } catch (err) {
-    console.error('[api/auth/me] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

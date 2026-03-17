@@ -20,6 +20,11 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
  * Returns { key } — the S3 object key to store in the animal's photo_url column.
  */
 export async function POST(request: NextRequest) {
+  // ── Check S3 first (fast fail) ──
+  if (!isS3Configured()) {
+    return NextResponse.json({ error: 'Photo storage is not configured' }, { status: 503 });
+  }
+
   // ── Auth check ──
   const supabase = await createServerSupabase();
   if (!supabase) {
@@ -28,10 +33,6 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (!isS3Configured()) {
-    return NextResponse.json({ error: 'S3 not configured' }, { status: 503 });
   }
 
   const s3 = getS3Client()!;
