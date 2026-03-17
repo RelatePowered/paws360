@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { PawPrint, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? '/dashboard';
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -20,37 +19,47 @@ export default function LoginPage() {
   // If user is already authenticated, redirect away from login
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.replace(next);
+      console.log('[Login] Already authenticated, redirecting to:', next);
+      window.location.href = next;
     }
-  }, [authLoading, isAuthenticated, next, router]);
+  }, [authLoading, isAuthenticated, next]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const supabase = createBrowserSupabase();
-    if (!supabase) {
-      setError('Authentication service is not configured');
+    try {
+      const supabase = createBrowserSupabase();
+      if (!supabase) {
+        console.error('[Login] createBrowserSupabase() returned null — env vars missing');
+        setError('Authentication service is not configured');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[Login] Calling signInWithPassword...');
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        console.error('[Login] signInWithPassword error:', authError.message);
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      console.log('[Login] signInWithPassword succeeded, redirecting to:', next);
+      // Hard redirect ensures the browser sends the freshly-set auth cookies
+      // to the middleware on the very first request.
+      window.location.href = next;
+    } catch (err) {
+      console.error('[Login] Unexpected error during sign in:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setLoading(false);
-      return;
     }
-
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
-
-    // Hard redirect ensures the browser sends the freshly-set auth cookies
-    // to the middleware on the very first request. router.push / router.refresh
-    // can race with cookie propagation and cause redirect loops.
-    window.location.href = next;
   }
 
   return (
