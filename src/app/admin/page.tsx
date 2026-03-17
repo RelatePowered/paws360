@@ -29,7 +29,7 @@ import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { useAuth } from '@/context/AuthContext';
 import { useUsers, useTags, useAlertRules } from '@/hooks/useTenantData';
-import { updateTenant } from '@/lib/tenant-data';
+import { updateTenant, createUser, createTag, createAlertRule } from '@/lib/tenant-data';
 import { formatDate, generateId, getSeverityColor } from '@/lib/utils';
 import { PLAN_DEFINITIONS, FEATURE_LABELS, getPlanInfo } from '@/lib/plans';
 import type { AdminTag, AlertRule, User, UserRole, PlanTier, GatedFeature } from '@/lib/types';
@@ -131,6 +131,67 @@ export default function AdminPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('staff');
 
+  // ── Tag form state ──
+  const [newTagLabel, setNewTagLabel] = useState('');
+  const [newTagCategory, setNewTagCategory] = useState('');
+  const [newTagSeverity, setNewTagSeverity] = useState('');
+  const [tagSaving, setTagSaving] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
+
+  const handleAddTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenantId) return;
+    setTagSaving(true);
+    setTagError(null);
+    try {
+      const tag = await createTag(tenantId, {
+        label: newTagLabel,
+        category: newTagCategory as AdminTag['category'],
+        severity: newTagSeverity ? (newTagSeverity as AdminTag['severity']) : undefined,
+      });
+      setTags(prev => [...prev, tag]);
+      setShowAddTagModal(false);
+      setNewTagLabel(''); setNewTagCategory(''); setNewTagSeverity('');
+    } catch (err) {
+      setTagError(err instanceof Error ? err.message : 'Failed to create tag');
+    } finally {
+      setTagSaving(false);
+    }
+  };
+
+  // ── Rule form state ──
+  const [newRuleName, setNewRuleName] = useState('');
+  const [newRuleDesc, setNewRuleDesc] = useState('');
+  const [newRuleCondition, setNewRuleCondition] = useState('');
+  const [newRuleThreshold, setNewRuleThreshold] = useState('');
+  const [newRuleSeverity, setNewRuleSeverity] = useState('');
+  const [ruleSaving, setRuleSaving] = useState(false);
+  const [ruleError, setRuleError] = useState<string | null>(null);
+
+  const handleAddRule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenantId) return;
+    setRuleSaving(true);
+    setRuleError(null);
+    try {
+      const rule = await createAlertRule(tenantId, {
+        name: newRuleName,
+        description: newRuleDesc,
+        condition: newRuleCondition as AlertRule['condition'],
+        threshold: Number(newRuleThreshold),
+        severity: newRuleSeverity as AlertRule['severity'],
+      });
+      setRules(prev => [...prev, rule]);
+      setShowAddRuleModal(false);
+      setNewRuleName(''); setNewRuleDesc(''); setNewRuleCondition('');
+      setNewRuleThreshold(''); setNewRuleSeverity('');
+    } catch (err) {
+      setRuleError(err instanceof Error ? err.message : 'Failed to create rule');
+    } finally {
+      setRuleSaving(false);
+    }
+  };
+
   // ── Tags logic ──
   const filteredTags = tags.filter(t => tagCategory === 'all' || t.category === tagCategory);
   const tagsByCategory = {
@@ -166,25 +227,32 @@ export default function AdminPage() {
   const changeUserRole = (userId: string, role: UserRole) => {
     setUsers(prev => prev.map(u => (u.id === userId ? { ...u, role } : u)));
   };
-  const handleAddUser = (e: React.FormEvent) => {
+  const [userSaving, setUserSaving] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser: User = {
-      id: generateId('user'),
-      tenantId,
-      email: newEmail,
-      firstName: newFirstName,
-      lastName: newLastName,
-      role: newRole,
-      permissions: {},
-      isActive: true,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setUsers(prev => [...prev, newUser]);
-    setShowAddUserModal(false);
-    setNewFirstName('');
-    setNewLastName('');
-    setNewEmail('');
-    setNewRole('staff');
+    if (!tenantId) return;
+    setUserSaving(true);
+    setUserError(null);
+    try {
+      const newUser = await createUser(tenantId, {
+        firstName: newFirstName,
+        lastName: newLastName,
+        email: newEmail,
+        role: newRole,
+      });
+      setUsers(prev => [...prev, newUser]);
+      setShowAddUserModal(false);
+      setNewFirstName('');
+      setNewLastName('');
+      setNewEmail('');
+      setNewRole('staff');
+    } catch (err) {
+      setUserError(err instanceof Error ? err.message : 'Failed to create user');
+    } finally {
+      setUserSaving(false);
+    }
   };
 
   const userColumns: Column<User>[] = [
@@ -520,8 +588,11 @@ export default function AdminPage() {
       {/* ════════════ Modals ════════════ */}
 
       {/* Add User Modal */}
-      <Modal open={showAddUserModal} onClose={() => setShowAddUserModal(false)} title="Invite New User" size="sm">
+      <Modal open={showAddUserModal} onClose={() => { setShowAddUserModal(false); setUserError(null); }} title="Invite New User" size="sm">
         <form className="space-y-4" onSubmit={handleAddUser}>
+          {userError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{userError}</div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <FormField label="First Name" required>
               <Input
@@ -564,23 +635,25 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddUserModal(false)}>Cancel</Button>
-            <Button type="submit">Create User</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddUserModal(false); setUserError(null); }}>Cancel</Button>
+            <Button type="submit" disabled={userSaving}>
+              {userSaving ? 'Creating...' : 'Create User'}
+            </Button>
           </div>
         </form>
       </Modal>
 
       {/* Add Tag Modal */}
-      <Modal open={showAddTagModal} onClose={() => setShowAddTagModal(false)} title="Add Tag" size="sm">
-        <form className="space-y-4" onSubmit={e => {
-          e.preventDefault();
-          setShowAddTagModal(false);
-        }}>
+      <Modal open={showAddTagModal} onClose={() => { setShowAddTagModal(false); setTagError(null); }} title="Add Tag" size="sm">
+        <form className="space-y-4" onSubmit={handleAddTag}>
+          {tagError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{tagError}</div>
+          )}
           <FormField label="Tag Label" required>
-            <Input placeholder="e.g., Excellent Adopter" required />
+            <Input placeholder="e.g., Excellent Adopter" required value={newTagLabel} onChange={e => setNewTagLabel(e.target.value)} />
           </FormField>
           <FormField label="Category" required>
-            <Select required>
+            <Select required value={newTagCategory} onChange={e => setNewTagCategory(e.target.value)}>
               <option value="">Select category</option>
               <option value="person">Person</option>
               <option value="animal">Animal</option>
@@ -590,7 +663,7 @@ export default function AdminPage() {
             </Select>
           </FormField>
           <FormField label="Severity (for adopter/alert tags)">
-            <Select>
+            <Select value={newTagSeverity} onChange={e => setNewTagSeverity(e.target.value)}>
               <option value="">No severity</option>
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -598,27 +671,29 @@ export default function AdminPage() {
             </Select>
           </FormField>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddTagModal(false)}>Cancel</Button>
-            <Button type="submit">Add Tag</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddTagModal(false); setTagError(null); }}>Cancel</Button>
+            <Button type="submit" disabled={tagSaving}>
+              {tagSaving ? 'Saving...' : 'Add Tag'}
+            </Button>
           </div>
         </form>
       </Modal>
 
       {/* Add Rule Modal */}
-      <Modal open={showAddRuleModal} onClose={() => setShowAddRuleModal(false)} title="Add Alert Rule" size="md">
-        <form className="space-y-4" onSubmit={e => {
-          e.preventDefault();
-          setShowAddRuleModal(false);
-        }}>
+      <Modal open={showAddRuleModal} onClose={() => { setShowAddRuleModal(false); setRuleError(null); }} title="Add Alert Rule" size="md">
+        <form className="space-y-4" onSubmit={handleAddRule}>
+          {ruleError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{ruleError}</div>
+          )}
           <FormField label="Rule Name" required>
-            <Input placeholder="e.g., Repeat Returner Alert" required />
+            <Input placeholder="e.g., Repeat Returner Alert" required value={newRuleName} onChange={e => setNewRuleName(e.target.value)} />
           </FormField>
           <FormField label="Description" required>
-            <Input placeholder="Describe what triggers this alert" required />
+            <Input placeholder="Describe what triggers this alert" required value={newRuleDesc} onChange={e => setNewRuleDesc(e.target.value)} />
           </FormField>
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Condition" required>
-              <Select required>
+              <Select required value={newRuleCondition} onChange={e => setNewRuleCondition(e.target.value)}>
                 <option value="">Select condition</option>
                 <option value="return_count_gte">Return count &ge; threshold</option>
                 <option value="note_severity">Note severity match</option>
@@ -626,11 +701,11 @@ export default function AdminPage() {
               </Select>
             </FormField>
             <FormField label="Threshold" required>
-              <Input type="number" min="1" placeholder="e.g., 2" required />
+              <Input type="number" min="1" placeholder="e.g., 2" required value={newRuleThreshold} onChange={e => setNewRuleThreshold(e.target.value)} />
             </FormField>
           </div>
           <FormField label="Severity" required>
-            <Select required>
+            <Select required value={newRuleSeverity} onChange={e => setNewRuleSeverity(e.target.value)}>
               <option value="">Select severity</option>
               <option value="info">Info</option>
               <option value="warning">Warning</option>
@@ -638,8 +713,10 @@ export default function AdminPage() {
             </Select>
           </FormField>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddRuleModal(false)}>Cancel</Button>
-            <Button type="submit">Add Rule</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddRuleModal(false); setRuleError(null); }}>Cancel</Button>
+            <Button type="submit" disabled={ruleSaving}>
+              {ruleSaving ? 'Saving...' : 'Add Rule'}
+            </Button>
           </div>
         </form>
       </Modal>

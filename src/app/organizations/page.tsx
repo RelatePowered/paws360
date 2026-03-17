@@ -23,6 +23,8 @@ import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
 import { useOrganizations, usePeople, useDonations } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createOrganization } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getRoleBadgeColor } from '@/lib/utils';
 import type { Organization } from '@/lib/types';
 
@@ -45,13 +47,69 @@ function getOrgTypeColor(type: string): string {
 }
 
 export default function OrganizationsPage() {
-  const allOrganizations = useOrganizations();
+  const fetchedOrganizations = useOrganizations();
+  const [localOrgs, setLocalOrgs] = useState<Organization[]>([]);
+  const allOrganizations = [...localOrgs, ...fetchedOrganizations];
   const allPeople = usePeople();
   const allDonations = useDonations();
+  const { currentTenant } = useAuth();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+
+  // Add org form state
+  const [orgName, setOrgName] = useState('');
+  const [orgType, setOrgType] = useState('');
+  const [orgEin, setOrgEin] = useState('');
+  const [orgContactName, setOrgContactName] = useState('');
+  const [orgContactEmail, setOrgContactEmail] = useState('');
+  const [orgContactPhone, setOrgContactPhone] = useState('');
+  const [orgAddress, setOrgAddress] = useState('');
+  const [orgCity, setOrgCity] = useState('');
+  const [orgState, setOrgState] = useState('');
+  const [orgZip, setOrgZip] = useState('');
+  const [orgRole, setOrgRole] = useState('');
+  const [orgMatching, setOrgMatching] = useState('no');
+  const [orgSaving, setOrgSaving] = useState(false);
+  const [orgError, setOrgError] = useState<string | null>(null);
+
+  function resetOrgForm() {
+    setOrgName(''); setOrgType(''); setOrgEin(''); setOrgContactName('');
+    setOrgContactEmail(''); setOrgContactPhone(''); setOrgAddress('');
+    setOrgCity(''); setOrgState(''); setOrgZip(''); setOrgRole('');
+    setOrgMatching('no'); setOrgError(null);
+  }
+
+  async function handleAddOrg(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setOrgSaving(true);
+    setOrgError(null);
+    try {
+      const org = await createOrganization(currentTenant.id, {
+        name: orgName,
+        type: orgType as Organization['type'],
+        ein: orgEin || undefined,
+        contactName: orgContactName,
+        contactEmail: orgContactEmail,
+        contactPhone: orgContactPhone,
+        address: orgAddress || undefined,
+        city: orgCity || undefined,
+        state: orgState || undefined,
+        zip: orgZip || undefined,
+        roles: orgRole ? [orgRole] : [],
+        matchingGiftProgram: orgMatching === 'yes',
+      });
+      setLocalOrgs(prev => [org, ...prev]);
+      setShowAddModal(false);
+      resetOrgForm();
+    } catch (err) {
+      setOrgError(err instanceof Error ? err.message : 'Failed to save organization');
+    } finally {
+      setOrgSaving(false);
+    }
+  }
 
   const filtered = allOrganizations.filter(o => {
     const matchesSearch = `${o.name} ${o.contactName} ${o.contactEmail}`.toLowerCase().includes(search.toLowerCase());
@@ -212,14 +270,17 @@ export default function OrganizationsPage() {
       </Card>
 
       {/* Add Org Modal */}
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="Add Organization" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddModal(false); }}>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); resetOrgForm(); }} title="Add Organization" size="lg">
+        <form className="space-y-4" onSubmit={handleAddOrg}>
+          {orgError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{orgError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Organization Name" required>
-              <Input placeholder="Company name" required />
+              <Input placeholder="Company name" required value={orgName} onChange={e => setOrgName(e.target.value)} />
             </FormField>
             <FormField label="Type" required>
-              <Select required>
+              <Select required value={orgType} onChange={e => setOrgType(e.target.value)}>
                 <option value="">Select type</option>
                 <option value="corporation">Corporation</option>
                 <option value="foundation">Foundation</option>
@@ -229,29 +290,29 @@ export default function OrganizationsPage() {
               </Select>
             </FormField>
             <FormField label="EIN (Tax ID)">
-              <Input placeholder="XX-XXXXXXX" />
+              <Input placeholder="XX-XXXXXXX" value={orgEin} onChange={e => setOrgEin(e.target.value)} />
             </FormField>
             <FormField label="Primary Contact Name" required>
-              <Input placeholder="Contact name" required />
+              <Input placeholder="Contact name" required value={orgContactName} onChange={e => setOrgContactName(e.target.value)} />
             </FormField>
             <FormField label="Contact Email" required>
-              <Input type="email" placeholder="email@company.com" required />
+              <Input type="email" placeholder="email@company.com" required value={orgContactEmail} onChange={e => setOrgContactEmail(e.target.value)} />
             </FormField>
             <FormField label="Contact Phone" required>
-              <Input placeholder="(555) 000-0000" required />
+              <Input placeholder="(555) 000-0000" required value={orgContactPhone} onChange={e => setOrgContactPhone(e.target.value)} />
             </FormField>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField label="Address" className="sm:col-span-3">
-              <Input placeholder="Street address" />
+              <Input placeholder="Street address" value={orgAddress} onChange={e => setOrgAddress(e.target.value)} />
             </FormField>
-            <FormField label="City"><Input placeholder="City" /></FormField>
-            <FormField label="State"><Input placeholder="State" /></FormField>
-            <FormField label="ZIP"><Input placeholder="ZIP" /></FormField>
+            <FormField label="City"><Input placeholder="City" value={orgCity} onChange={e => setOrgCity(e.target.value)} /></FormField>
+            <FormField label="State"><Input placeholder="State" value={orgState} onChange={e => setOrgState(e.target.value)} /></FormField>
+            <FormField label="ZIP"><Input placeholder="ZIP" value={orgZip} onChange={e => setOrgZip(e.target.value)} /></FormField>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Roles">
-              <Select>
+              <Select value={orgRole} onChange={e => setOrgRole(e.target.value)}>
                 <option value="">Select primary role</option>
                 <option value="donor">Donor</option>
                 <option value="volunteer">Volunteer</option>
@@ -259,15 +320,17 @@ export default function OrganizationsPage() {
               </Select>
             </FormField>
             <FormField label="Matching Gift Program">
-              <Select>
+              <Select value={orgMatching} onChange={e => setOrgMatching(e.target.value)}>
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
               </Select>
             </FormField>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit">Add Organization</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetOrgForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={orgSaving}>
+              {orgSaving ? 'Saving...' : 'Add Organization'}
+            </Button>
           </div>
         </form>
       </Modal>

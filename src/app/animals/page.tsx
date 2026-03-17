@@ -29,7 +29,7 @@ import PhotoUpload from '@/components/ui/PhotoUpload';
 import SocialPostPanel from '@/components/ui/SocialPostPanel';
 import { useAnimals, useMedicalRecords } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
-import { createMedicalRecord } from '@/lib/tenant-data';
+import { createMedicalRecord, createAnimal } from '@/lib/tenant-data';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
 import type { Animal, MedicalRecord, MedicalRecordType } from '@/lib/types';
 
@@ -108,7 +108,9 @@ function CageCard({ animal }: { animal: Animal }) {
 }
 
 export default function AnimalsPage() {
-  const allAnimals = useAnimals();
+  const fetchedAnimals = useAnimals();
+  const [localAnimals, setLocalAnimals] = useState<Animal[]>([]);
+  const allAnimals = [...localAnimals, ...fetchedAnimals];
   const fetchedMedicalRecords = useMedicalRecords();
   const [localMedicalRecords, setLocalMedicalRecords] = useState<MedicalRecord[]>([]);
   const allMedicalRecords = [...localMedicalRecords, ...fetchedMedicalRecords];
@@ -120,6 +122,67 @@ export default function AnimalsPage() {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [detailTab, setDetailTab] = useState<'info' | 'medical' | 'cage-card'>('info');
   const [newAnimalPhotoKey, setNewAnimalPhotoKey] = useState<string | null>(null);
+
+  // Animal intake form state
+  const [animalName, setAnimalName] = useState('');
+  const [animalSpecies, setAnimalSpecies] = useState('');
+  const [animalBreed, setAnimalBreed] = useState('');
+  const [animalColor, setAnimalColor] = useState('');
+  const [animalGender, setAnimalGender] = useState('');
+  const [animalSize, setAnimalSize] = useState('');
+  const [animalAge, setAnimalAge] = useState('');
+  const [animalDob, setAnimalDob] = useState('');
+  const [animalWeight, setAnimalWeight] = useState('');
+  const [animalMicrochip, setAnimalMicrochip] = useState('');
+  const [animalIntakeType, setAnimalIntakeType] = useState('');
+  const [animalCondition, setAnimalCondition] = useState('');
+  const [animalAltered, setAnimalAltered] = useState('');
+  const [animalKennel, setAnimalKennel] = useState('');
+  const [animalDescription, setAnimalDescription] = useState('');
+  const [animalSaving, setAnimalSaving] = useState(false);
+  const [animalError, setAnimalError] = useState<string | null>(null);
+
+  function resetAnimalForm() {
+    setAnimalName(''); setAnimalSpecies(''); setAnimalBreed(''); setAnimalColor('');
+    setAnimalGender(''); setAnimalSize(''); setAnimalAge(''); setAnimalDob('');
+    setAnimalWeight(''); setAnimalMicrochip(''); setAnimalIntakeType('');
+    setAnimalCondition(''); setAnimalAltered(''); setAnimalKennel('');
+    setAnimalDescription(''); setNewAnimalPhotoKey(null); setAnimalError(null);
+  }
+
+  async function handleAddAnimal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setAnimalSaving(true);
+    setAnimalError(null);
+    try {
+      const animal = await createAnimal(currentTenant.id, {
+        name: animalName,
+        species: animalSpecies as Animal['species'],
+        breed: animalBreed,
+        color: animalColor,
+        gender: animalGender as Animal['gender'],
+        size: animalSize as Animal['size'],
+        age: animalAge || undefined,
+        dateOfBirth: animalDob || undefined,
+        weight: animalWeight ? Number(animalWeight) : undefined,
+        microchipId: animalMicrochip || undefined,
+        intakeType: animalIntakeType as Animal['intakeType'],
+        intakeCondition: animalCondition as Animal['intakeCondition'],
+        alteredStatus: animalAltered as Animal['alteredStatus'],
+        description: animalDescription,
+        kennelLocation: animalKennel || undefined,
+        photoUrl: newAnimalPhotoKey || undefined,
+      });
+      setLocalAnimals(prev => [animal, ...prev]);
+      setShowAddModal(false);
+      resetAnimalForm();
+    } catch (err) {
+      setAnimalError(err instanceof Error ? err.message : 'Failed to save animal');
+    } finally {
+      setAnimalSaving(false);
+    }
+  }
 
   // Medical record form state
   const [showAddMedicalModal, setShowAddMedicalModal] = useState(false);
@@ -327,14 +390,17 @@ export default function AnimalsPage() {
       </Card>
 
       {/* Add Animal Modal */}
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="Animal Intake" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddModal(false); }}>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); resetAnimalForm(); }} title="Animal Intake" size="lg">
+        <form className="space-y-4" onSubmit={handleAddAnimal}>
+          {animalError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{animalError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Name" required>
-              <Input placeholder="Animal name" required />
+              <Input placeholder="Animal name" required value={animalName} onChange={e => setAnimalName(e.target.value)} />
             </FormField>
             <FormField label="Species" required>
-              <Select required>
+              <Select required value={animalSpecies} onChange={e => setAnimalSpecies(e.target.value)}>
                 <option value="">Select species</option>
                 <option value="dog">Dog</option>
                 <option value="cat">Cat</option>
@@ -344,13 +410,13 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Breed" required>
-              <Input placeholder="Breed" required />
+              <Input placeholder="Breed" required value={animalBreed} onChange={e => setAnimalBreed(e.target.value)} />
             </FormField>
             <FormField label="Color" required>
-              <Input placeholder="Color/markings" required />
+              <Input placeholder="Color/markings" required value={animalColor} onChange={e => setAnimalColor(e.target.value)} />
             </FormField>
             <FormField label="Gender" required>
-              <Select required>
+              <Select required value={animalGender} onChange={e => setAnimalGender(e.target.value)}>
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -358,7 +424,7 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Size" required>
-              <Select required>
+              <Select required value={animalSize} onChange={e => setAnimalSize(e.target.value)}>
                 <option value="">Select size</option>
                 <option value="small">Small</option>
                 <option value="medium">Medium</option>
@@ -367,19 +433,19 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Age">
-              <Input placeholder="e.g., 2 years" />
+              <Input placeholder="e.g., 2 years" value={animalAge} onChange={e => setAnimalAge(e.target.value)} />
             </FormField>
             <FormField label="Date of Birth">
-              <Input type="date" />
+              <Input type="date" value={animalDob} onChange={e => setAnimalDob(e.target.value)} />
             </FormField>
             <FormField label="Weight (lbs)">
-              <Input type="number" placeholder="Weight" />
+              <Input type="number" placeholder="Weight" value={animalWeight} onChange={e => setAnimalWeight(e.target.value)} />
             </FormField>
             <FormField label="Microchip ID">
-              <Input placeholder="Microchip number" />
+              <Input placeholder="Microchip number" value={animalMicrochip} onChange={e => setAnimalMicrochip(e.target.value)} />
             </FormField>
             <FormField label="Intake Type" required>
-              <Select required>
+              <Select required value={animalIntakeType} onChange={e => setAnimalIntakeType(e.target.value)}>
                 <option value="">Select intake type</option>
                 <option value="stray">Stray</option>
                 <option value="surrender">Owner Surrender</option>
@@ -389,7 +455,7 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Intake Condition (Asilomar)" required>
-              <Select required>
+              <Select required value={animalCondition} onChange={e => setAnimalCondition(e.target.value)}>
                 <option value="">Select condition</option>
                 <option value="healthy">Healthy</option>
                 <option value="treatable-rehabilitable">Treatable - Rehabilitable</option>
@@ -398,7 +464,7 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Altered Status" required>
-              <Select required>
+              <Select required value={animalAltered} onChange={e => setAnimalAltered(e.target.value)}>
                 <option value="">Select status</option>
                 <option value="intact">Intact</option>
                 <option value="spayed">Spayed</option>
@@ -407,14 +473,11 @@ export default function AnimalsPage() {
               </Select>
             </FormField>
             <FormField label="Kennel Location">
-              <Input placeholder="e.g., D-101" />
+              <Input placeholder="e.g., D-101" value={animalKennel} onChange={e => setAnimalKennel(e.target.value)} />
             </FormField>
           </div>
           <FormField label="Description" required>
-            <Textarea placeholder="Physical description, temperament, notes..." rows={3} required />
-          </FormField>
-          <FormField label="Intake Person (if surrender/drop-off)">
-            <Input placeholder="Search person by name..." />
+            <Textarea placeholder="Physical description, temperament, notes..." rows={3} required value={animalDescription} onChange={e => setAnimalDescription(e.target.value)} />
           </FormField>
           <div>
             <label className="block text-sm font-medium mb-1">Photo</label>
@@ -425,8 +488,10 @@ export default function AnimalsPage() {
             />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit">Complete Intake</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetAnimalForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={animalSaving}>
+              {animalSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Complete Intake'}
+            </Button>
           </div>
         </form>
       </Modal>

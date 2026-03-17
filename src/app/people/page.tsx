@@ -26,6 +26,8 @@ import { DataTable } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { usePeople, useDonations } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createPerson } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getRoleBadgeColor, getMoveInsight } from '@/lib/utils';
 import type { Person, Move, Donation } from '@/lib/types';
 
@@ -160,16 +162,66 @@ function MovesTimeline({ person, donations }: { person: Person; donations: Donat
 }
 
 export default function PeoplePage() {
-  const allPeople = usePeople();
+  const fetchedPeople = usePeople();
+  const [localPeople, setLocalPeople] = useState<Person[]>([]);
+  const allPeople = [...localPeople, ...fetchedPeople];
   const allDonations = useDonations();
+  const { currentTenant } = useAuth();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
+  // Add person form state
+  const [personFirstName, setPersonFirstName] = useState('');
+  const [personLastName, setPersonLastName] = useState('');
+  const [personEmail, setPersonEmail] = useState('');
+  const [personPhone, setPersonPhone] = useState('');
+  const [personRole, setPersonRole] = useState('');
+  const [personAddress, setPersonAddress] = useState('');
+  const [personCity, setPersonCity] = useState('');
+  const [personState, setPersonState] = useState('');
+  const [personZip, setPersonZip] = useState('');
+  const [personSaving, setPersonSaving] = useState(false);
+  const [personError, setPersonError] = useState<string | null>(null);
+
+  function resetPersonForm() {
+    setPersonFirstName(''); setPersonLastName(''); setPersonEmail('');
+    setPersonPhone(''); setPersonRole(''); setPersonAddress('');
+    setPersonCity(''); setPersonState(''); setPersonZip('');
+    setPersonError(null);
+  }
+
+  async function handleAddPerson(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setPersonSaving(true);
+    setPersonError(null);
+    try {
+      const person = await createPerson(currentTenant.id, {
+        firstName: personFirstName,
+        lastName: personLastName,
+        email: personEmail,
+        phone: personPhone,
+        roles: personRole ? [personRole] : [],
+        address: personAddress || undefined,
+        city: personCity || undefined,
+        state: personState || undefined,
+        zip: personZip || undefined,
+      });
+      setLocalPeople(prev => [person, ...prev]);
+      setShowAddModal(false);
+      resetPersonForm();
+    } catch (err) {
+      setPersonError(err instanceof Error ? err.message : 'Failed to save person');
+    } finally {
+      setPersonSaving(false);
+    }
+  }
+
   const filtered = allPeople.filter(p => {
     const matchesSearch = `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === 'all' || p.roles.includes(roleFilter);
+    const matchesRole = roleFilter === 'all' || (roleFilter === 'multi' ? p.roles.length >= 2 : p.roles.includes(roleFilter));
     return matchesSearch && matchesRole;
   });
 
@@ -291,24 +343,37 @@ export default function PeoplePage() {
         </CardBody>
       </Card>
 
-      {/* Summary cards */}
+      {/* Summary cards - clickable role filters */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-primary">{allPeople.filter(p => p.roles.includes('donor')).length}</p>
-          <p className="text-sm text-muted">Donors</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-success">{allPeople.filter(p => p.roles.includes('volunteer')).length}</p>
-          <p className="text-sm text-muted">Volunteers</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-border p-4 text-center">
-          <p className="text-2xl font-bold text-secondary">{allPeople.filter(p => p.roles.includes('adopter')).length}</p>
-          <p className="text-sm text-muted">Adopters</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-border p-4 text-center">
+        {([
+          { role: 'donor', label: 'Donors', color: 'text-primary', count: allPeople.filter(p => p.roles.includes('donor')).length },
+          { role: 'volunteer', label: 'Volunteers', color: 'text-success', count: allPeople.filter(p => p.roles.includes('volunteer')).length },
+          { role: 'adopter', label: 'Adopters', color: 'text-secondary', count: allPeople.filter(p => p.roles.includes('adopter')).length },
+        ] as const).map(item => (
+          <button
+            key={item.role}
+            onClick={() => setRoleFilter(roleFilter === item.role ? 'all' : item.role)}
+            className={`bg-surface rounded-xl border p-4 text-center transition-colors ${
+              roleFilter === item.role
+                ? 'border-primary bg-primary/10'
+                : 'border-border hover:bg-surface-hover'
+            }`}
+          >
+            <p className={`text-2xl font-bold ${item.color}`}>{item.count}</p>
+            <p className="text-sm text-muted">{item.label}</p>
+          </button>
+        ))}
+        <button
+          onClick={() => setRoleFilter(roleFilter === 'multi' ? 'all' : 'multi')}
+          className={`bg-surface rounded-xl border p-4 text-center transition-colors ${
+            roleFilter === 'multi'
+              ? 'border-primary bg-primary/10'
+              : 'border-border hover:bg-surface-hover'
+          }`}
+        >
           <p className="text-2xl font-bold text-warning">{allPeople.filter(p => p.roles.length >= 2).length}</p>
           <p className="text-sm text-muted">Multi-role</p>
-        </div>
+        </button>
       </div>
 
       {/* Table */}
@@ -322,23 +387,26 @@ export default function PeoplePage() {
       </Card>
 
       {/* Add Person Modal */}
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="Add Person" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddModal(false); }}>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); resetPersonForm(); }} title="Add Person" size="lg">
+        <form className="space-y-4" onSubmit={handleAddPerson}>
+          {personError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{personError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="First Name" required>
-              <Input placeholder="First name" required />
+              <Input placeholder="First name" required value={personFirstName} onChange={e => setPersonFirstName(e.target.value)} />
             </FormField>
             <FormField label="Last Name" required>
-              <Input placeholder="Last name" required />
+              <Input placeholder="Last name" required value={personLastName} onChange={e => setPersonLastName(e.target.value)} />
             </FormField>
             <FormField label="Email" required>
-              <Input type="email" placeholder="email@example.com" required />
+              <Input type="email" placeholder="email@example.com" required value={personEmail} onChange={e => setPersonEmail(e.target.value)} />
             </FormField>
             <FormField label="Phone" required>
-              <Input placeholder="(555) 000-0000" required />
+              <Input placeholder="(555) 000-0000" required value={personPhone} onChange={e => setPersonPhone(e.target.value)} />
             </FormField>
             <FormField label="Initial Role" required>
-              <Select required>
+              <Select required value={personRole} onChange={e => setPersonRole(e.target.value)}>
                 <option value="">Select role</option>
                 <option value="donor">Donor</option>
                 <option value="volunteer">Volunteer</option>
@@ -348,21 +416,23 @@ export default function PeoplePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField label="Address" className="sm:col-span-3">
-              <Input placeholder="Street address" />
+              <Input placeholder="Street address" value={personAddress} onChange={e => setPersonAddress(e.target.value)} />
             </FormField>
             <FormField label="City">
-              <Input placeholder="City" />
+              <Input placeholder="City" value={personCity} onChange={e => setPersonCity(e.target.value)} />
             </FormField>
             <FormField label="State">
-              <Input placeholder="State" />
+              <Input placeholder="State" value={personState} onChange={e => setPersonState(e.target.value)} />
             </FormField>
             <FormField label="ZIP">
-              <Input placeholder="ZIP" />
+              <Input placeholder="ZIP" value={personZip} onChange={e => setPersonZip(e.target.value)} />
             </FormField>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit">Add Person</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetPersonForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={personSaving}>
+              {personSaving ? 'Saving...' : 'Add Person'}
+            </Button>
           </div>
         </form>
       </Modal>
