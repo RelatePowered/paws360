@@ -23,6 +23,8 @@ import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { useFosterHomes, useFosterPlacements, useAnimals } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createFosterHome } from '@/lib/tenant-data';
 import { formatDate } from '@/lib/utils';
 import type { FosterHome, FosterPlacement } from '@/lib/types';
 
@@ -36,12 +38,63 @@ function getPlacementStatusColor(status: string): string {
 }
 
 export default function FosterPage() {
-  const fosterHomes = useFosterHomes();
+  const fetchedHomes = useFosterHomes();
+  const [localHomes, setLocalHomes] = useState<FosterHome[]>([]);
+  const fosterHomes = [...localHomes, ...fetchedHomes];
   const placements = useFosterPlacements();
   const animals = useAnimals();
+  const { currentTenant } = useAuth();
   const [tab, setTab] = useState<'homes' | 'placements'>('homes');
   const [selectedHome, setSelectedHome] = useState<FosterHome | null>(null);
   const [showAddHome, setShowAddHome] = useState(false);
+
+  // Foster home form state
+  const [fhFirstName, setFhFirstName] = useState('');
+  const [fhLastName, setFhLastName] = useState('');
+  const [fhEmail, setFhEmail] = useState('');
+  const [fhPhone, setFhPhone] = useState('');
+  const [fhAddress, setFhAddress] = useState('');
+  const [fhCity, setFhCity] = useState('');
+  const [fhState, setFhState] = useState('');
+  const [fhZip, setFhZip] = useState('');
+  const [fhCapacity, setFhCapacity] = useState('');
+  const [fhNotes, setFhNotes] = useState('');
+  const [fhSaving, setFhSaving] = useState(false);
+  const [fhError, setFhError] = useState<string | null>(null);
+
+  function resetFhForm() {
+    setFhFirstName(''); setFhLastName(''); setFhEmail(''); setFhPhone('');
+    setFhAddress(''); setFhCity(''); setFhState(''); setFhZip('');
+    setFhCapacity(''); setFhNotes(''); setFhError(null);
+  }
+
+  async function handleAddFosterHome(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setFhSaving(true);
+    setFhError(null);
+    try {
+      const home = await createFosterHome(currentTenant.id, {
+        firstName: fhFirstName,
+        lastName: fhLastName,
+        email: fhEmail,
+        phone: fhPhone,
+        address: fhAddress || undefined,
+        city: fhCity || undefined,
+        state: fhState || undefined,
+        zip: fhZip || undefined,
+        capacity: Number(fhCapacity),
+        notes: fhNotes || undefined,
+      });
+      setLocalHomes(prev => [home, ...prev]);
+      setShowAddHome(false);
+      resetFhForm();
+    } catch (err) {
+      setFhError(err instanceof Error ? err.message : 'Failed to save foster home');
+    } finally {
+      setFhSaving(false);
+    }
+  }
 
   const activeHomes = fosterHomes.filter(h => h.isActive);
   const activePlacements = placements.filter(p => p.status === 'active');
@@ -304,43 +357,48 @@ export default function FosterPage() {
       </Modal>
 
       {/* Add Foster Home Modal */}
-      <Modal open={showAddHome} onClose={() => setShowAddHome(false)} title="Add Foster Home" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddHome(false); }}>
+      <Modal open={showAddHome} onClose={() => { setShowAddHome(false); resetFhForm(); }} title="Add Foster Home" size="lg">
+        <form className="space-y-4" onSubmit={handleAddFosterHome}>
+          {fhError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{fhError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="First Name" required>
-              <Input placeholder="First name" required />
+              <Input placeholder="First name" required value={fhFirstName} onChange={e => setFhFirstName(e.target.value)} />
             </FormField>
             <FormField label="Last Name" required>
-              <Input placeholder="Last name" required />
+              <Input placeholder="Last name" required value={fhLastName} onChange={e => setFhLastName(e.target.value)} />
             </FormField>
             <FormField label="Email" required>
-              <Input type="email" placeholder="Email address" required />
+              <Input type="email" placeholder="Email address" required value={fhEmail} onChange={e => setFhEmail(e.target.value)} />
             </FormField>
             <FormField label="Phone" required>
-              <Input placeholder="Phone number" required />
+              <Input placeholder="Phone number" required value={fhPhone} onChange={e => setFhPhone(e.target.value)} />
             </FormField>
             <FormField label="Address">
-              <Input placeholder="Street address" />
+              <Input placeholder="Street address" value={fhAddress} onChange={e => setFhAddress(e.target.value)} />
             </FormField>
             <FormField label="City">
-              <Input placeholder="City" />
+              <Input placeholder="City" value={fhCity} onChange={e => setFhCity(e.target.value)} />
             </FormField>
             <FormField label="State">
-              <Input placeholder="State" />
+              <Input placeholder="State" value={fhState} onChange={e => setFhState(e.target.value)} />
             </FormField>
             <FormField label="Zip">
-              <Input placeholder="Zip code" />
+              <Input placeholder="Zip code" value={fhZip} onChange={e => setFhZip(e.target.value)} />
             </FormField>
             <FormField label="Capacity" required>
-              <Input type="number" min={1} placeholder="Max animals" required />
+              <Input type="number" min={1} placeholder="Max animals" required value={fhCapacity} onChange={e => setFhCapacity(e.target.value)} />
             </FormField>
           </div>
           <FormField label="Notes">
-            <Textarea placeholder="Home details, yard, experience, etc." rows={3} />
+            <Textarea placeholder="Home details, yard, experience, etc." rows={3} value={fhNotes} onChange={e => setFhNotes(e.target.value)} />
           </FormField>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddHome(false)}>Cancel</Button>
-            <Button type="submit">Add Foster Home</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddHome(false); resetFhForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={fhSaving}>
+              {fhSaving ? 'Saving...' : 'Add Foster Home'}
+            </Button>
           </div>
         </form>
       </Modal>

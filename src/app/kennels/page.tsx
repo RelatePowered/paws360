@@ -8,20 +8,66 @@ import {
   Search,
   Printer,
   Filter,
+  Plus,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
 import { useKennelLocations, useAnimals } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createKennelLocation } from '@/lib/tenant-data';
 import { getStatusBadgeColor } from '@/lib/utils';
 import type { KennelLocation } from '@/lib/types';
 
 export default function KennelsPage() {
-  const kennels = useKennelLocations();
+  const fetchedKennels = useKennelLocations();
+  const [localKennels, setLocalKennels] = useState<KennelLocation[]>([]);
+  const kennels = [...localKennels, ...fetchedKennels];
   const animals = useAnimals();
+  const { currentTenant } = useAuth();
   const [zoneFilter, setZoneFilter] = useState('all');
   const [speciesFilter, setSpeciesFilter] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Add kennel form state
+  const [kennelName, setKennelName] = useState('');
+  const [kennelZone, setKennelZone] = useState('');
+  const [kennelNewZone, setKennelNewZone] = useState('');
+  const [kennelSpecies, setKennelSpecies] = useState('');
+  const [kennelSize, setKennelSize] = useState('');
+  const [kennelSaving, setKennelSaving] = useState(false);
+  const [kennelError, setKennelError] = useState<string | null>(null);
+
+  function resetKennelForm() {
+    setKennelName(''); setKennelZone(''); setKennelNewZone('');
+    setKennelSpecies(''); setKennelSize(''); setKennelError(null);
+  }
+
+  async function handleAddKennel(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    const zone = kennelZone === '__new__' ? kennelNewZone : kennelZone;
+    if (!zone) return;
+    setKennelSaving(true);
+    setKennelError(null);
+    try {
+      const loc = await createKennelLocation(currentTenant.id, {
+        name: kennelName,
+        zone,
+        species: kennelSpecies as KennelLocation['species'],
+        size: kennelSize as KennelLocation['size'],
+      });
+      setLocalKennels(prev => [loc, ...prev]);
+      setShowAddModal(false);
+      resetKennelForm();
+    } catch (err) {
+      setKennelError(err instanceof Error ? err.message : 'Failed to add kennel');
+    } finally {
+      setKennelSaving(false);
+    }
+  }
 
   const zones = Array.from(new Set(kennels.map(k => k.zone)));
   const totalKennels = kennels.length;
@@ -49,6 +95,10 @@ export default function KennelsPage() {
           <h1 className="text-2xl font-bold">Kennel Map</h1>
           <p className="text-muted text-sm mt-1">Visual overview of facility occupancy</p>
         </div>
+        <Button onClick={() => setShowAddModal(true)}>
+          <Plus className="w-4 h-4" />
+          Add Kennel
+        </Button>
       </div>
 
       {/* Capacity Overview */}
@@ -154,6 +204,56 @@ export default function KennelsPage() {
           </CardBody>
         </Card>
       ))}
+      {/* Add Kennel Modal */}
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); resetKennelForm(); }} title="Add Kennel" size="sm">
+        <form className="space-y-4" onSubmit={handleAddKennel}>
+          {kennelError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{kennelError}</div>
+          )}
+          <FormField label="Kennel Name" required>
+            <Input placeholder="e.g., D-101" required value={kennelName} onChange={e => setKennelName(e.target.value)} />
+          </FormField>
+          <FormField label="Zone / Wing" required>
+            <Select required value={kennelZone} onChange={e => setKennelZone(e.target.value)}>
+              <option value="">Select zone</option>
+              {zones.map(z => (
+                <option key={z} value={z}>{z}</option>
+              ))}
+              <option value="__new__">+ New Zone / Wing</option>
+            </Select>
+          </FormField>
+          {kennelZone === '__new__' && (
+            <FormField label="New Zone Name" required>
+              <Input placeholder="e.g., Dog Wing A" required value={kennelNewZone} onChange={e => setKennelNewZone(e.target.value)} />
+            </FormField>
+          )}
+          <FormField label="Species" required>
+            <Select required value={kennelSpecies} onChange={e => setKennelSpecies(e.target.value)}>
+              <option value="">Select species</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="bird">Bird</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="other">Other</option>
+            </Select>
+          </FormField>
+          <FormField label="Size" required>
+            <Select required value={kennelSize} onChange={e => setKennelSize(e.target.value)}>
+              <option value="">Select size</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="extra-large">Extra Large</option>
+            </Select>
+          </FormField>
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetKennelForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={kennelSaving}>
+              {kennelSaving ? 'Adding...' : 'Add Kennel'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
     </UpgradeGate>
   );

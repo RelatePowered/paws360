@@ -679,6 +679,304 @@ export async function getAdoptionApplications(tenantId: string): Promise<Adoptio
   });
 }
 
+export async function createAnimal(
+  tenantId: string,
+  input: {
+    name: string;
+    species: Animal['species'];
+    breed: string;
+    color: string;
+    gender: Animal['gender'];
+    size: Animal['size'];
+    age?: string;
+    dateOfBirth?: string;
+    weight?: number;
+    microchipId?: string;
+    intakeType: Animal['intakeType'];
+    intakeCondition: Animal['intakeCondition'];
+    alteredStatus: Animal['alteredStatus'];
+    description: string;
+    kennelLocation?: string;
+    photoUrl?: string;
+  }
+): Promise<Animal> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  // Generate human-readable ID
+  const speciesPrefix = input.species === 'dog' ? 'DOG' : input.species === 'cat' ? 'CAT' : input.species.toUpperCase().slice(0, 3);
+  const year = new Date().getFullYear();
+  const seq = String(Math.floor(Math.random() * 9999)).padStart(4, '0');
+  const animalId = `${speciesPrefix}-${year}-${seq}`;
+  const row = {
+    id,
+    tenant_id: tenantId,
+    animal_id: animalId,
+    name: input.name,
+    species: input.species,
+    breed: input.breed,
+    color: input.color,
+    gender: input.gender,
+    size: input.size,
+    age: input.age ?? null,
+    date_of_birth: input.dateOfBirth ?? null,
+    weight: input.weight ?? null,
+    microchip_id: input.microchipId ?? null,
+    status: 'intake',
+    intake_date: now,
+    intake_type: input.intakeType,
+    intake_condition: input.intakeCondition,
+    altered_status: input.alteredStatus,
+    description: input.description,
+    medical_notes: [],
+    tags: [],
+    photo_url: input.photoUrl ?? null,
+    kennel_location: input.kennelLocation ?? null,
+    created_at: now,
+    updated_at: now,
+  };
+  const { error } = await sb.from('animals').insert(row as never);
+  if (error) throw error;
+  return rowToAnimal(row as Record<string, unknown>);
+}
+
+export async function createPerson(
+  tenantId: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    roles: string[];
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  }
+): Promise<Person> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    roles: input.roles,
+    tags: [],
+    address: input.address ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    zip: input.zip ?? null,
+    total_donations: 0,
+    total_volunteer_hours: 0,
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  };
+  const { error } = await sb.from('people').insert(row as never);
+  if (error) throw error;
+  return rowToPerson(row as Record<string, unknown>, []);
+}
+
+export async function createOrganization(
+  tenantId: string,
+  input: {
+    name: string;
+    type: Organization['type'];
+    ein?: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    roles?: string[];
+    matchingGiftProgram?: boolean;
+  }
+): Promise<Organization> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    name: input.name,
+    type: input.type,
+    ein: input.ein ?? null,
+    contact_name: input.contactName,
+    contact_email: input.contactEmail,
+    contact_phone: input.contactPhone,
+    address: input.address ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    zip: input.zip ?? null,
+    member_ids: [],
+    roles: input.roles ?? [],
+    total_donations: 0,
+    total_volunteer_hours: 0,
+    matching_gift_program: input.matchingGiftProgram ?? false,
+    tags: [],
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  };
+  const { error } = await sb.from('organizations').insert(row as never);
+  if (error) throw error;
+  return rowToOrganization(row as Record<string, unknown>);
+}
+
+export async function createFosterHome(
+  tenantId: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    capacity: number;
+    notes?: string;
+  }
+): Promise<FosterHome> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    address: input.address ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    zip: input.zip ?? null,
+    capacity: input.capacity,
+    current_count: 0,
+    species_preference: [],
+    size_preference: [],
+    is_active: true,
+    notes: input.notes ?? null,
+    created_at: now,
+    updated_at: now,
+  };
+  const { error } = await sb.from('foster_homes').insert(row as never);
+  if (error) throw error;
+  return rowToFosterHome(row as Record<string, unknown>);
+}
+
+export async function createTag(
+  tenantId: string,
+  input: {
+    label: string;
+    category: AdminTag['category'];
+    severity?: AdminTag['severity'];
+  }
+): Promise<AdminTag> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    label: input.label,
+    category: input.category,
+    severity: input.severity ?? null,
+    is_active: true,
+    created_at: now,
+  };
+  const { error } = await sb.from('admin_tags').insert(row as never);
+  if (error) throw error;
+  return rowToAdminTag(row as Record<string, unknown>);
+}
+
+export async function createAlertRule(
+  tenantId: string,
+  input: {
+    name: string;
+    description: string;
+    condition: AlertRule['condition'];
+    threshold: number;
+    severity: AlertRule['severity'];
+  }
+): Promise<AlertRule> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const row = {
+    id,
+    tenant_id: tenantId,
+    name: input.name,
+    description: input.description,
+    condition: input.condition,
+    threshold: input.threshold,
+    severity: input.severity,
+    is_active: true,
+  };
+  const { error } = await sb.from('alert_rules').insert(row as never);
+  if (error) throw error;
+  return rowToAlertRule(row as Record<string, unknown>);
+}
+
+export async function createUser(
+  tenantId: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: User['role'];
+  }
+): Promise<User> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    email: input.email,
+    role: input.role,
+    permissions: {},
+    is_active: true,
+    created_at: now,
+  };
+  const { error } = await sb.from('users').insert(row as never);
+  if (error) throw error;
+  return rowToUser(row as Record<string, unknown>);
+}
+
+export async function createKennelLocation(
+  tenantId: string,
+  input: {
+    name: string;
+    zone: string;
+    species: KennelLocation['species'];
+    size: KennelLocation['size'];
+  }
+): Promise<KennelLocation> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const row = {
+    id,
+    tenant_id: tenantId,
+    name: input.name,
+    zone: input.zone,
+    species: input.species,
+    size: input.size,
+    is_occupied: false,
+  };
+  const { error } = await sb.from('kennel_locations').insert(row as never);
+  if (error) throw error;
+  return rowToKennelLocation(row as Record<string, unknown>);
+}
+
 export async function getKennelLocations(tenantId: string): Promise<KennelLocation[]> {
   const sb = getSupabase();
   const { data } = await sb.from('kennel_locations').select('*').eq('tenant_id', tenantId);
