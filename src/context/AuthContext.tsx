@@ -58,41 +58,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Auth session listener ──
   useEffect(() => {
-    console.log('[Auth] Initializing auth context...');
     const supabase = createBrowserSupabase();
     if (!supabase) {
-      console.error('[Auth] createBrowserSupabase() returned null — env vars missing');
       setIsLoading(false);
       return;
     }
-    console.log('[Auth] Supabase client created, setting up onAuthStateChange...');
 
     // Safety timeout: if loading hasn't resolved in 15s, force it off
     loadingTimerRef.current = setTimeout(() => {
-      console.error('[Auth] Safety timeout — forcing isLoading to false after 15s');
       setIsLoading(false);
     }, 15000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log(`[Auth] onAuthStateChange event="${event}" hasSession=${!!session} userId=${session?.user?.id ?? 'none'}`);
         try {
           if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-            console.log('[Auth] Session active, fetching user profile from /api/auth/me...');
             await loadAppUser();
           } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
-            console.log('[Auth] No session or signed out, clearing state');
             setCurrentUser(null);
             setActiveTenantId(null);
             setTenants([]);
           }
-        } catch (err) {
-          console.error('[Auth] Error in onAuthStateChange handler:', err);
+        } catch {
           setCurrentUser(null);
           setActiveTenantId(null);
           setTenants([]);
         } finally {
-          console.log('[Auth] Setting isLoading to false');
           if (loadingTimerRef.current) {
             clearTimeout(loadingTimerRef.current);
             loadingTimerRef.current = null;
@@ -116,22 +107,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * The API route uses the server Supabase client with cookies.
    */
   async function loadAppUser() {
-    console.log('[Auth] Calling /api/auth/me...');
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-    console.log(`[Auth] /api/auth/me response: status=${res.status}`);
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      console.error('[Auth] /api/auth/me error:', body.error ?? res.statusText);
       setCurrentUser(null);
       return;
     }
 
     const data = await res.json();
-    console.log('[Auth] /api/auth/me data:', { hasUser: !!data.user, tenantCount: data.tenants?.length ?? 0 });
 
     if (!data.user) {
-      console.warn('[Auth] No user profile returned');
       setCurrentUser(null);
       return;
     }
@@ -151,7 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authUid: u.auth_uid,
     };
 
-    console.log(`[Auth] App user loaded: id=${appUser.id} email=${appUser.email} role=${appUser.role}`);
     setCurrentUser(appUser);
     setActiveTenantId(appUser.tenantId);
 
@@ -177,7 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    console.log('[Auth] loadAppUser complete');
   }
 
   // ── Derived state ──

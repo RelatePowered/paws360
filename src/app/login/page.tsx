@@ -19,7 +19,6 @@ export default function LoginPage() {
   // If user is already authenticated, redirect away from login
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      console.log('[Login] Already authenticated, redirecting to:', next);
       window.location.href = next;
     }
   }, [authLoading, isAuthenticated, next]);
@@ -32,31 +31,26 @@ export default function LoginPage() {
     try {
       const supabase = createBrowserSupabase();
       if (!supabase) {
-        console.error('[Login] createBrowserSupabase() returned null — env vars missing');
         setError('Authentication service is not configured');
         setLoading(false);
         return;
       }
 
-      console.log('[Login] Calling signInWithPassword...');
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) {
-        console.error('[Login] signInWithPassword error:', authError.message);
         setError(authError.message);
         setLoading(false);
         return;
       }
 
-      console.log('[Login] signInWithPassword succeeded, redirecting to:', next);
       // Hard redirect ensures the browser sends the freshly-set auth cookies
       // to the middleware on the very first request.
       window.location.href = next;
     } catch (err) {
-      console.error('[Login] Unexpected error during sign in:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setLoading(false);
     }
