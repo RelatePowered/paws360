@@ -1,19 +1,28 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PawPrint, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { createBrowserSupabase } from '@/lib/supabase-browser';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? '/dashboard';
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // If user is already authenticated, redirect away from login
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(next);
+    }
+  }, [authLoading, isAuthenticated, next, router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

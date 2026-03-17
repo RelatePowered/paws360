@@ -16,6 +16,7 @@ import {
   Shield,
   Scissors,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -28,8 +29,9 @@ import PhotoUpload from '@/components/ui/PhotoUpload';
 import SocialPostPanel from '@/components/ui/SocialPostPanel';
 import { useAnimals, useMedicalRecords } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
+import { createMedicalRecord } from '@/lib/tenant-data';
 import { formatDate, getStatusBadgeColor } from '@/lib/utils';
-import type { Animal, MedicalRecord } from '@/lib/types';
+import type { Animal, MedicalRecord, MedicalRecordType } from '@/lib/types';
 
 function getConditionBadgeColor(condition: string): string {
   switch (condition) {
@@ -107,7 +109,9 @@ function CageCard({ animal }: { animal: Animal }) {
 
 export default function AnimalsPage() {
   const allAnimals = useAnimals();
-  const allMedicalRecords = useMedicalRecords();
+  const fetchedMedicalRecords = useMedicalRecords();
+  const [localMedicalRecords, setLocalMedicalRecords] = useState<MedicalRecord[]>([]);
+  const allMedicalRecords = [...localMedicalRecords, ...fetchedMedicalRecords];
   const { currentUser, currentTenant } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -116,6 +120,52 @@ export default function AnimalsPage() {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [detailTab, setDetailTab] = useState<'info' | 'medical' | 'cage-card'>('info');
   const [newAnimalPhotoKey, setNewAnimalPhotoKey] = useState<string | null>(null);
+
+  // Medical record form state
+  const [showAddMedicalModal, setShowAddMedicalModal] = useState(false);
+  const [medType, setMedType] = useState<MedicalRecordType>('vaccination');
+  const [medDescription, setMedDescription] = useState('');
+  const [medDate, setMedDate] = useState('');
+  const [medVet, setMedVet] = useState('');
+  const [medNotes, setMedNotes] = useState('');
+  const [medNextDue, setMedNextDue] = useState('');
+  const [medSaving, setMedSaving] = useState(false);
+  const [medError, setMedError] = useState<string | null>(null);
+
+  function resetMedicalForm() {
+    setMedType('vaccination');
+    setMedDescription('');
+    setMedDate('');
+    setMedVet('');
+    setMedNotes('');
+    setMedNextDue('');
+    setMedError(null);
+  }
+
+  async function handleAddMedicalRecord(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant || !selectedAnimal) return;
+    setMedSaving(true);
+    setMedError(null);
+    try {
+      const record = await createMedicalRecord(currentTenant.id, {
+        animalId: selectedAnimal.id,
+        type: medType,
+        description: medDescription,
+        date: medDate,
+        veterinarian: medVet || undefined,
+        notes: medNotes || undefined,
+        nextDueDate: medNextDue || undefined,
+      });
+      setLocalMedicalRecords(prev => [record, ...prev]);
+      setShowAddMedicalModal(false);
+      resetMedicalForm();
+    } catch (err) {
+      setMedError(err instanceof Error ? err.message : 'Failed to save medical record');
+    } finally {
+      setMedSaving(false);
+    }
+  }
 
   const filtered = allAnimals.filter(a => {
     const matchesSearch = `${a.name} ${a.animalId} ${a.breed}`.toLowerCase().includes(search.toLowerCase());
@@ -543,6 +593,10 @@ export default function AnimalsPage() {
                     <Stethoscope className="w-4 h-4" />
                     Medical Records for {selectedAnimal.name}
                   </h3>
+                  <Button size="sm" onClick={() => setShowAddMedicalModal(true)}>
+                    <Plus className="w-4 h-4" />
+                    Add Record
+                  </Button>
                 </div>
 
                 {animalMedicalRecords.length === 0 ? (
@@ -592,6 +646,60 @@ export default function AnimalsPage() {
             )}
           </div>
         )}
+      </Modal>
+
+      {/* Add Medical Record Modal */}
+      <Modal open={showAddMedicalModal} onClose={() => { setShowAddMedicalModal(false); resetMedicalForm(); }} title={`Add Medical Record — ${selectedAnimal?.name ?? ''}`} size="lg">
+        <form className="space-y-4" onSubmit={handleAddMedicalRecord}>
+          {medError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{medError}</div>
+          )}
+
+          <FormField label="Record Type" required>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {(['vaccination', 'surgery', 'treatment', 'exam', 'medication', 'test'] as const).map(type => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setMedType(type)}
+                  className={`p-2 rounded-lg border text-center text-xs font-medium transition-colors capitalize ${
+                    medType === type
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-surface hover:bg-surface-hover'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Description" required className="sm:col-span-2">
+              <Input placeholder="e.g., Rabies vaccination, Spay surgery..." value={medDescription} onChange={e => setMedDescription(e.target.value)} required />
+            </FormField>
+            <FormField label="Date" required>
+              <Input type="date" value={medDate} onChange={e => setMedDate(e.target.value)} required />
+            </FormField>
+            <FormField label="Veterinarian">
+              <Input placeholder="Dr. name" value={medVet} onChange={e => setMedVet(e.target.value)} />
+            </FormField>
+            <FormField label="Next Due Date">
+              <Input type="date" value={medNextDue} onChange={e => setMedNextDue(e.target.value)} />
+            </FormField>
+          </div>
+
+          <FormField label="Notes">
+            <Textarea placeholder="Additional notes..." rows={2} value={medNotes} onChange={e => setMedNotes(e.target.value)} />
+          </FormField>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="outline" type="button" onClick={() => { setShowAddMedicalModal(false); resetMedicalForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={medSaving}>
+              {medSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Save Record'}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

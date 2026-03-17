@@ -20,6 +20,8 @@ export interface Database {
           phone: string | null;
           email: string | null;
           logo_url: string | null;
+          website: string | null;
+          ein: string | null;
           created_at: string;
           is_active: boolean;
         };

@@ -14,6 +14,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   isAuthenticated: boolean;
+  /** True while the initial session is being restored. */
+  isLoading: boolean;
   /** Switch active tenant (super admin only). */
   switchTenant: (tenantId: string) => void;
   /** Sign out and redirect to marketing page. */
@@ -37,6 +39,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isSuperAdmin: false,
   isAuthenticated: false,
+  isLoading: true,
   switchTenant: () => {},
   logout: () => {},
   canView: () => false,
@@ -50,17 +53,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // ── Supabase auth session listener ──
   useEffect(() => {
     const supabase = createBrowserSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
 
     // Load initial session
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (authUser) {
         await loadAppUser(authUser.id);
       }
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
     });
 
     // Listen for changes (login, logout, token refresh)
@@ -138,6 +148,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: (t.phone as string) ?? undefined,
           email: (t.email as string) ?? undefined,
           logoUrl: (t.logo_url as string) ?? undefined,
+          website: (t.website as string) ?? undefined,
+          ein: (t.ein as string) ?? undefined,
           createdAt: t.created_at as string,
           isActive: t.is_active as boolean,
         }))
@@ -177,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: userIsAdmin,
         isSuperAdmin: userIsSuperAdmin,
         isAuthenticated: currentUser !== null,
+        isLoading,
         switchTenant,
         logout,
         canView: (mod) => canView(currentUser, mod),

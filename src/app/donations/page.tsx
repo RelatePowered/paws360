@@ -11,6 +11,7 @@ import {
   Download,
   Receipt,
   Building2,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -20,15 +21,79 @@ import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
 import { useDonations } from '@/hooks/useTenantData';
+import { useAuth } from '@/context/AuthContext';
+import { createDonation } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getDonationTypeColor } from '@/lib/utils';
 import type { Donation } from '@/lib/types';
 
 export default function DonationsPage() {
-  const allDonations = useDonations();
+  const fetchedDonations = useDonations();
+  const { currentTenant } = useAuth();
+  const [localDonations, setLocalDonations] = useState<Donation[]>([]);
+  const allDonations = [...localDonations, ...fetchedDonations];
+
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [donationType, setDonationType] = useState('monetary');
+  const [donationType, setDonationType] = useState<Donation['type']>('monetary');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Form state
+  const [formDonor, setFormDonor] = useState('');
+  const [formDate, setFormDate] = useState('');
+  const [formCategory, setFormCategory] = useState('');
+  const [formAmount, setFormAmount] = useState('');
+  const [formHours, setFormHours] = useState('');
+  const [formEstValue, setFormEstValue] = useState('');
+  const [formItemDesc, setFormItemDesc] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formReceipt, setFormReceipt] = useState(false);
+
+  function resetForm() {
+    setDonationType('monetary');
+    setFormDonor('');
+    setFormDate('');
+    setFormCategory('');
+    setFormAmount('');
+    setFormHours('');
+    setFormEstValue('');
+    setFormItemDesc('');
+    setFormDescription('');
+    setFormReceipt(false);
+    setSaveError(null);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const donation = await createDonation(currentTenant.id, {
+        type: donationType,
+        description: formDescription,
+        date: formDate,
+        category: formCategory,
+        personName: formDonor || undefined,
+        amount: donationType === 'monetary' ? parseFloat(formAmount) : undefined,
+        hours: donationType === 'time' ? parseFloat(formHours) : undefined,
+        itemDescription: donationType === 'in-kind' ? formItemDesc : undefined,
+        estimatedValue: donationType === 'in-kind' && formEstValue ? parseFloat(formEstValue) : undefined,
+        receiptIssued: formReceipt,
+      });
+
+      // Add to local state for instant UI update
+      setLocalDonations(prev => [donation, ...prev]);
+      setShowAddModal(false);
+      resetForm();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save donation');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const filtered = allDonations.filter(d => {
     const matchesSearch = `${d.personName || ''} ${d.organizationName || ''} ${d.description} ${d.category}`.toLowerCase().includes(search.toLowerCase());
@@ -187,8 +252,12 @@ export default function DonationsPage() {
       </Card>
 
       {/* Add Donation Modal */}
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="Record Donation" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddModal(false); }}>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); resetForm(); }} title="Record Donation" size="lg">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {saveError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{saveError}</div>
+          )}
+
           <FormField label="Donation Type" required>
             <div className="flex gap-2">
               {(['monetary', 'in-kind', 'time'] as const).map(type => (
@@ -213,13 +282,13 @@ export default function DonationsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Donor" required>
-              <Input placeholder="Search donor by name..." required />
+              <Input placeholder="Donor name..." value={formDonor} onChange={e => setFormDonor(e.target.value)} required />
             </FormField>
             <FormField label="Date" required>
-              <Input type="date" required />
+              <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} required />
             </FormField>
             <FormField label="Category" required>
-              <Select required>
+              <Select value={formCategory} onChange={e => setFormCategory(e.target.value)} required>
                 <option value="">Select category</option>
                 <option value="General Fund">General Fund</option>
                 <option value="Capital Campaign">Capital Campaign</option>
@@ -233,40 +302,42 @@ export default function DonationsPage() {
 
             {donationType === 'monetary' && (
               <FormField label="Amount ($)" required>
-                <Input type="number" step="0.01" placeholder="0.00" required />
+                <Input type="number" step="0.01" placeholder="0.00" value={formAmount} onChange={e => setFormAmount(e.target.value)} required />
               </FormField>
             )}
             {donationType === 'in-kind' && (
               <>
                 <FormField label="Estimated Value ($)">
-                  <Input type="number" step="0.01" placeholder="0.00" />
+                  <Input type="number" step="0.01" placeholder="0.00" value={formEstValue} onChange={e => setFormEstValue(e.target.value)} />
                 </FormField>
                 <FormField label="Item Description" required className="sm:col-span-2">
-                  <Input placeholder="What was donated?" required />
+                  <Input placeholder="What was donated?" value={formItemDesc} onChange={e => setFormItemDesc(e.target.value)} required />
                 </FormField>
               </>
             )}
             {donationType === 'time' && (
               <FormField label="Hours" required>
-                <Input type="number" step="0.5" placeholder="0" required />
+                <Input type="number" step="0.5" placeholder="0" value={formHours} onChange={e => setFormHours(e.target.value)} required />
               </FormField>
             )}
           </div>
 
           <FormField label="Description" required>
-            <Textarea placeholder="Brief description of the donation..." rows={2} required />
+            <Textarea placeholder="Brief description of the donation..." rows={2} value={formDescription} onChange={e => setFormDescription(e.target.value)} required />
           </FormField>
 
           {donationType !== 'time' && (
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" className="rounded border-border" />
+              <input type="checkbox" className="rounded border-border" checked={formReceipt} onChange={e => setFormReceipt(e.target.checked)} />
               Issue tax receipt
             </label>
           )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit">Record Donation</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Record Donation'}
+            </Button>
           </div>
         </form>
       </Modal>

@@ -45,6 +45,8 @@ function rowToTenant(r: Record<string, unknown>): Tenant {
     phone: r.phone as string | undefined,
     email: r.email as string | undefined,
     logoUrl: r.logo_url as string | undefined,
+    website: r.website as string | undefined,
+    ein: r.ein as string | undefined,
     createdAt: r.created_at as string,
     isActive: r.is_active as boolean,
   };
@@ -339,6 +341,38 @@ export async function getTenants(): Promise<Tenant[]> {
   return (data ?? []).map(r => rowToTenant(r as Record<string, unknown>));
 }
 
+export async function updateTenant(
+  tenantId: string,
+  fields: Partial<{
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    phone: string;
+    email: string;
+    logoUrl: string;
+    website: string;
+    ein: string;
+  }>
+): Promise<void> {
+  const sb = getSupabase();
+  // Map camelCase fields to snake_case DB columns
+  const row: Record<string, unknown> = {};
+  if (fields.name !== undefined) row.name = fields.name;
+  if (fields.address !== undefined) row.address = fields.address;
+  if (fields.city !== undefined) row.city = fields.city;
+  if (fields.state !== undefined) row.state = fields.state;
+  if (fields.zip !== undefined) row.zip = fields.zip;
+  if (fields.phone !== undefined) row.phone = fields.phone;
+  if (fields.email !== undefined) row.email = fields.email;
+  if (fields.logoUrl !== undefined) row.logo_url = fields.logoUrl;
+  if (fields.website !== undefined) row.website = fields.website;
+  if (fields.ein !== undefined) row.ein = fields.ein;
+  const { error } = await sb.from('tenants').update(row as Record<string, unknown> as never).eq('id', tenantId);
+  if (error) throw error;
+}
+
 export async function getUsers(tenantId: string): Promise<User[]> {
   const sb = getSupabase();
   const { data } = await sb.from('users').select('*').eq('tenant_id', tenantId);
@@ -373,6 +407,44 @@ export async function getDonations(tenantId: string): Promise<Donation[]> {
   const sb = getSupabase();
   const { data } = await sb.from('donations').select('*').eq('tenant_id', tenantId);
   return (data ?? []).map(r => rowToDonation(r as Record<string, unknown>));
+}
+
+export async function createDonation(
+  tenantId: string,
+  input: {
+    type: Donation['type'];
+    description: string;
+    date: string;
+    category: string;
+    personName?: string;
+    amount?: number;
+    hours?: number;
+    itemDescription?: string;
+    estimatedValue?: number;
+    receiptIssued?: boolean;
+    notes?: string;
+  }
+): Promise<Donation> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const row = {
+    id,
+    tenant_id: tenantId,
+    type: input.type,
+    description: input.description,
+    date: input.date,
+    category: input.category,
+    person_name: input.personName ?? null,
+    amount: input.amount ?? null,
+    hours: input.hours ?? null,
+    item_description: input.itemDescription ?? null,
+    estimated_value: input.estimatedValue ?? null,
+    receipt_issued: input.receiptIssued ?? false,
+    notes: input.notes ?? null,
+  };
+  const { error } = await sb.from('donations').insert(row as never);
+  if (error) throw error;
+  return rowToDonation(row as Record<string, unknown>);
 }
 
 export async function getAdopters(tenantId: string): Promise<Adopter[]> {
@@ -479,6 +551,38 @@ export async function getDashboardStats(tenantId: string): Promise<DashboardStat
     liveReleaseRate,
     averageLengthOfStay,
   };
+}
+
+export async function createMedicalRecord(
+  tenantId: string,
+  input: {
+    animalId: string;
+    type: MedicalRecord['type'];
+    description: string;
+    date: string;
+    veterinarian?: string;
+    notes?: string;
+    nextDueDate?: string;
+  }
+): Promise<MedicalRecord> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString().split('T')[0];
+  const row = {
+    id,
+    tenant_id: tenantId,
+    animal_id: input.animalId,
+    type: input.type,
+    description: input.description,
+    date: input.date,
+    veterinarian: input.veterinarian ?? null,
+    notes: input.notes ?? null,
+    next_due_date: input.nextDueDate ?? null,
+    created_at: now,
+  };
+  const { error } = await sb.from('medical_records').insert(row as never);
+  if (error) throw error;
+  return rowToMedicalRecord(row as Record<string, unknown>);
 }
 
 export async function getMedicalRecords(tenantId: string): Promise<MedicalRecord[]> {

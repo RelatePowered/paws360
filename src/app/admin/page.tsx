@@ -19,6 +19,7 @@ import {
   Phone,
   MapPin,
   Image,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -28,6 +29,7 @@ import { FormField, Input, Select } from '@/components/ui/FormField';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { useAuth } from '@/context/AuthContext';
 import { useUsers, useTags, useAlertRules } from '@/hooks/useTenantData';
+import { updateTenant } from '@/lib/tenant-data';
 import { formatDate, generateId, getSeverityColor } from '@/lib/utils';
 import { PLAN_DEFINITIONS, FEATURE_LABELS, getPlanInfo } from '@/lib/plans';
 import type { AdminTag, AlertRule, User, UserRole, PlanTier, GatedFeature } from '@/lib/types';
@@ -75,12 +77,50 @@ export default function AdminPage() {
   const [brandingLogoUrl, setBrandingLogoUrl] = useState(currentTenant?.logoUrl ?? '');
   const [brandingEin, setBrandingEin] = useState(currentTenant?.ein ?? '');
   const [brandingSaved, setBrandingSaved] = useState(false);
+  const [brandingSaving, setBrandingSaving] = useState(false);
+  const [brandingError, setBrandingError] = useState<string | null>(null);
 
-  const handleSaveBranding = (e: React.FormEvent) => {
+  // Sync branding fields when tenant data loads
+  useEffect(() => {
+    if (currentTenant) {
+      setBrandingName(currentTenant.name ?? '');
+      setBrandingAddress(currentTenant.address ?? '');
+      setBrandingCity(currentTenant.city ?? '');
+      setBrandingState(currentTenant.state ?? '');
+      setBrandingZip(currentTenant.zip ?? '');
+      setBrandingPhone(currentTenant.phone ?? '');
+      setBrandingEmail(currentTenant.email ?? '');
+      setBrandingWebsite(currentTenant.website ?? '');
+      setBrandingLogoUrl(currentTenant.logoUrl ?? '');
+      setBrandingEin(currentTenant.ein ?? '');
+    }
+  }, [currentTenant]);
+
+  const handleSaveBranding = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production this would persist to the database via Supabase
-    setBrandingSaved(true);
-    setTimeout(() => setBrandingSaved(false), 3000);
+    if (!tenantId) return;
+    setBrandingSaving(true);
+    setBrandingError(null);
+    try {
+      await updateTenant(tenantId, {
+        name: brandingName,
+        address: brandingAddress,
+        city: brandingCity,
+        state: brandingState,
+        zip: brandingZip,
+        phone: brandingPhone,
+        email: brandingEmail,
+        website: brandingWebsite,
+        logoUrl: brandingLogoUrl,
+        ein: brandingEin,
+      });
+      setBrandingSaved(true);
+      setTimeout(() => setBrandingSaved(false), 3000);
+    } catch (err) {
+      setBrandingError(err instanceof Error ? err.message : 'Failed to save branding');
+    } finally {
+      setBrandingSaving(false);
+    }
   };
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -832,8 +872,13 @@ export default function AdminPage() {
                         <CheckCircle2 className="w-4 h-4" /> Branding settings saved
                       </p>
                     )}
+                    {brandingError && (
+                      <p className="text-sm text-danger">{brandingError}</p>
+                    )}
                   </div>
-                  <Button type="submit">Save Branding Settings</Button>
+                  <Button type="submit" disabled={brandingSaving}>
+                    {brandingSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Save Branding Settings'}
+                  </Button>
                 </div>
               </form>
             </CardBody>
