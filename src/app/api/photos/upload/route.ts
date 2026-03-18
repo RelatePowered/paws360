@@ -83,10 +83,11 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     const isTimeout = message.includes('aborted') || message.includes('TimeoutError') || message.includes('timed out');
+    console.error('Photo upload failed:', message);
     return NextResponse.json(
       { error: isTimeout
-          ? 'Photo upload timed out — please verify S3 bucket permissions and credentials in Amplify.'
-          : `Photo upload failed: ${message}` },
+          ? 'Photo upload timed out. Please try again later.'
+          : 'Photo upload failed. Please try again later.' },
       { status: 502 }
     );
   }
