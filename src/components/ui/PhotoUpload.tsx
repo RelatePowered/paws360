@@ -75,33 +75,38 @@ export default function PhotoUpload({
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('tenantId', tenantId);
-    formData.append('animalId', animalId);
-
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60_000);
-      const res = await fetch('/api/photos/upload', {
+      // Step 1: Get a presigned PUT URL from our server (small JSON request, fast)
+      const presignRes = await fetch('/api/photos/presign', {
         method: 'POST',
-        body: formData,
-        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          animalId,
+          contentType: file.type,
+          size: file.size,
+        }),
       });
-      clearTimeout(timeout);
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Upload failed');
+      if (!presignRes.ok) {
+        const data = await presignRes.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not prepare upload');
       }
-      const { key } = await res.json();
+      const { url, key } = await presignRes.json();
+
+      // Step 2: PUT the file directly to S3 (bypasses serverless function limits)
+      const uploadRes = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        throw new Error('Upload to storage failed');
+      }
+
       setUploadedKey(key);
       onUploaded(key);
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        setError('Upload timed out. Please check your connection and try again.');
-      } else {
-        setError(err instanceof Error ? err.message : 'Upload failed');
-      }
+      setError(err instanceof Error ? err.message : 'Upload failed');
       setPreview(null);
     } finally {
       setUploading(false);
