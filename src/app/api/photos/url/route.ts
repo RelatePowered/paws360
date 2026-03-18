@@ -46,17 +46,21 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isS3Configured()) {
-    return NextResponse.json({ error: 'S3 not configured' }, { status: 503 });
+    return NextResponse.json({ error: 'Photo storage is not available' }, { status: 503 });
   }
 
   const s3 = getS3Client()!;
   const bucket = getS3Bucket();
 
-  const url = await getSignedUrl(
-    s3,
-    new GetObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn: 900 } // 15 minutes
-  );
-
-  return NextResponse.json({ url });
+  try {
+    const url = await getSignedUrl(
+      s3,
+      new GetObjectCommand({ Bucket: bucket, Key: key }),
+      { expiresIn: 900 } // 15 minutes
+    );
+    return NextResponse.json({ url });
+  } catch (err) {
+    console.error('Failed to generate signed URL:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Could not generate photo URL. Please try again later.' }, { status: 502 });
+  }
 }

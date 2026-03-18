@@ -18,7 +18,7 @@ export async function GET() {
   try {
     const supabase = await createServerSupabase();
     if (!supabase) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+      return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
     }
 
     // Verify the authenticated user from cookies

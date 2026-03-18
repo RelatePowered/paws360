@@ -12,7 +12,13 @@ export function getS3Client(): S3Client | null {
   if (!region) return null;
 
   if (!_client) {
-    _client = new S3Client({ region });
+    _client = new S3Client({
+      region,
+      requestHandler: {
+        requestTimeout: 10_000,   // 10s max per HTTP request
+        connectionTimeout: 5_000, // 5s to establish connection
+      } as Record<string, unknown>,
+    });
   }
   return _client;
 }
@@ -22,12 +28,8 @@ export function getS3Bucket(): string {
 }
 
 export function isS3Configured(): boolean {
-  const bucket = process.env.S3_BUCKET_NAME ?? '';
-  const region = process.env.S3_REGION || process.env.AWS_REGION || '';
-
-  // Reject empty or obvious placeholder values
-  if (!bucket || !region) return false;
-  if (/^your[- ]/.test(bucket) || bucket === 'bucket-name' || bucket === 'example') return false;
-
-  return true;
+  return Boolean(
+    process.env.S3_BUCKET_NAME &&
+    (process.env.S3_REGION || process.env.AWS_REGION)
+  );
 }
