@@ -77,13 +77,16 @@ export async function POST(request: NextRequest) {
         Key: key,
         Body: buffer,
         ContentType: file.type,
-        // No ACL — bucket is private, access only via signed URLs
-      })
+      }),
+      { abortSignal: AbortSignal.timeout(15_000) },
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
+    const isTimeout = message.includes('aborted') || message.includes('TimeoutError') || message.includes('timed out');
     return NextResponse.json(
-      { error: `Photo upload failed: ${message}` },
+      { error: isTimeout
+          ? 'Photo upload timed out — please verify S3 bucket permissions and credentials in Amplify.'
+          : `Photo upload failed: ${message}` },
       { status: 502 }
     );
   }
