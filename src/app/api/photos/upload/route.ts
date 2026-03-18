@@ -3,6 +3,10 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getS3Client, getS3Bucket, isS3Configured } from '@/lib/s3';
 import { createServerSupabase } from '@/lib/supabase-server';
 
+// Allow up to 60 seconds for large image uploads on serverless platforms
+// (Amplify default is 10s which is too tight for multi-MB files).
+export const maxDuration = 60;
+
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -103,7 +107,7 @@ export async function POST(request: NextRequest) {
         Body: buffer,
         ContentType: file.type,
       }),
-      { abortSignal: AbortSignal.timeout(15_000) },
+      { abortSignal: AbortSignal.timeout(45_000) },
     );
     const putMs = Date.now() - putStart;
     console.log('[photo-upload] success', {
