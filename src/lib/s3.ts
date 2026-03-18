@@ -15,7 +15,6 @@ export function getS3Client(): S3Client | null {
     _client = new S3Client({
       region,
       requestHandler: {
-        requestTimeout: 30_000,   // 30s max per HTTP request (large image uploads)
         connectionTimeout: 5_000, // 5s to establish connection
       } as Record<string, unknown>,
     });
