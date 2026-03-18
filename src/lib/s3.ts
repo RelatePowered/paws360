@@ -22,8 +22,12 @@ export function getS3Bucket(): string {
 }
 
 export function isS3Configured(): boolean {
-  return Boolean(
-    process.env.S3_BUCKET_NAME &&
-    (process.env.S3_REGION || process.env.AWS_REGION)
-  );
+  const bucket = process.env.S3_BUCKET_NAME ?? '';
+  const region = process.env.S3_REGION || process.env.AWS_REGION || '';
+
+  // Reject empty or obvious placeholder values
+  if (!bucket || !region) return false;
+  if (/^your[- ]/.test(bucket) || bucket === 'bucket-name' || bucket === 'example') return false;
+
+  return true;
 }

@@ -70,15 +70,23 @@ export async function POST(request: NextRequest) {
   // ── Upload to S3 ──
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-      // No ACL — bucket is private, access only via signed URLs
-    })
-  );
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: file.type,
+        // No ACL — bucket is private, access only via signed URLs
+      })
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json(
+      { error: `Photo upload failed: ${message}` },
+      { status: 502 }
+    );
+  }
 
   return NextResponse.json({ key });
 }
