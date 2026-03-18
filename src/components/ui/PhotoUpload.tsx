@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,15 @@ export default function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedKey, setUploadedKey] = useState<string | null>(currentPhotoKey ?? null);
+  const [storageAvailable, setStorageAvailable] = useState<boolean | null>(null);
+
+  // Check if photo storage is configured on mount
+  useEffect(() => {
+    fetch('/api/photos/status')
+      .then(r => r.json())
+      .then(data => setStorageAvailable(data.configured === true))
+      .catch(() => setStorageAvailable(false));
+  }, []);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -56,6 +65,13 @@ export default function PhotoUpload({
   }
 
   async function uploadFile(file: File) {
+    // Fast-fail if storage isn't configured
+    if (storageAvailable === false) {
+      setError('Photo storage is not configured. Photos can be added once S3 storage is set up.');
+      setPreview(null);
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
@@ -66,7 +82,7 @@ export default function PhotoUpload({
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 30000);
       const res = await fetch('/api/photos/upload', {
         method: 'POST',
         body: formData,
@@ -81,7 +97,11 @@ export default function PhotoUpload({
       setUploadedKey(key);
       onUploaded(key);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Upload timed out. Please check your connection and try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Upload failed');
+      }
       setPreview(null);
     } finally {
       setUploading(false);
@@ -134,6 +154,11 @@ export default function PhotoUpload({
               <X className="w-3.5 h-3.5" />
             </button>
           )}
+        </div>
+      ) : storageAvailable === false ? (
+        <div className="w-32 h-32 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted opacity-50">
+          <Upload className="w-6 h-6" />
+          <span className="text-xs font-medium text-center px-1">Storage not configured</span>
         </div>
       ) : (
         <button
