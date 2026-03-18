@@ -65,8 +65,8 @@ export default function PhotoUpload({
   }
 
   async function uploadFile(file: File) {
-    // Fast-fail if storage isn't configured
-    if (storageAvailable === false) {
+    // Fast-fail if storage isn't configured (or still unknown)
+    if (storageAvailable !== true) {
       setError('Photo storage is not configured. Photos can be added once S3 storage is set up.');
       setPreview(null);
       return;
@@ -155,10 +155,12 @@ export default function PhotoUpload({
             </button>
           )}
         </div>
-      ) : storageAvailable === false ? (
+      ) : storageAvailable !== true ? (
         <div className="w-32 h-32 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted opacity-50">
           <Upload className="w-6 h-6" />
-          <span className="text-xs font-medium text-center px-1">Storage not configured</span>
+          <span className="text-xs font-medium text-center px-1">
+            {storageAvailable === null ? 'Checking…' : 'Storage not configured'}
+          </span>
         </div>
       ) : (
         <button
