@@ -67,7 +67,7 @@ export default function PhotoUpload({
   async function uploadFile(file: File) {
     // Fast-fail if storage isn't configured (or still unknown)
     if (storageAvailable !== true) {
-      setError('Photo storage is not configured. Photos can be added once S3 storage is set up.');
+      setError('Photo storage is not available. Please try again later.');
       setPreview(null);
       return;
     }

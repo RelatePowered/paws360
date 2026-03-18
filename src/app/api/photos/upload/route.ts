@@ -67,10 +67,35 @@ export async function POST(request: NextRequest) {
   const ext = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1];
   const key = `${tenantId}/animals/${animalId}/${Date.now()}.${ext}`;
 
-  // ── Upload to S3 ──
+  // ── Upload ──
   const buffer = Buffer.from(await file.arrayBuffer());
+  const uploadStart = Date.now();
 
+  // Phase 1: Resolve credentials (this is where IAM role issues surface)
+  let credentialMs = -1;
   try {
+    const credStart = Date.now();
+    const creds = await s3.config.credentials();
+    credentialMs = Date.now() - credStart;
+    console.log('[photo-upload] credentials resolved', {
+      ms: credentialMs,
+      hasAccessKey: Boolean(creds.accessKeyId),
+      hasSession: Boolean(creds.sessionToken),
+      source: creds.accessKeyId?.startsWith('ASIA') ? 'sts/role' : 'static',
+    });
+  } catch (credErr) {
+    const elapsed = Date.now() - uploadStart;
+    const msg = credErr instanceof Error ? credErr.message : String(credErr);
+    console.error('[photo-upload] credential resolution failed', { ms: elapsed, error: msg });
+    return NextResponse.json(
+      { error: 'Photo upload failed. Please try again later.' },
+      { status: 502 }
+    );
+  }
+
+  // Phase 2: Send PutObject
+  try {
+    const putStart = Date.now();
     await s3.send(
       new PutObjectCommand({
         Bucket: bucket,
@@ -80,10 +105,35 @@ export async function POST(request: NextRequest) {
       }),
       { abortSignal: AbortSignal.timeout(15_000) },
     );
+    const putMs = Date.now() - putStart;
+    console.log('[photo-upload] success', {
+      key,
+      sizeBytes: buffer.length,
+      credentialMs,
+      putMs,
+      totalMs: Date.now() - uploadStart,
+    });
   } catch (err) {
+    const elapsed = Date.now() - uploadStart;
+    const name = err instanceof Error ? err.name : 'Unknown';
     const message = err instanceof Error ? err.message : 'Unknown error';
-    const isTimeout = message.includes('aborted') || message.includes('TimeoutError') || message.includes('timed out');
-    console.error('Photo upload failed:', message);
+    const code = (err as Record<string, unknown>)?.$metadata
+      ? ((err as Record<string, unknown>).$metadata as Record<string, unknown>)?.httpStatusCode
+      : undefined;
+
+    console.error('[photo-upload] PutObject failed', {
+      errorName: name,
+      errorMessage: message,
+      httpStatus: code,
+      bucket,
+      region: process.env.S3_REGION ?? process.env.AWS_REGION,
+      credentialMs,
+      totalMs: elapsed,
+    });
+
+    const isTimeout = name === 'AbortError' || name === 'TimeoutError'
+      || message.includes('aborted') || message.includes('timed out');
+
     return NextResponse.json(
       { error: isTimeout
           ? 'Photo upload timed out. Please try again later.'
