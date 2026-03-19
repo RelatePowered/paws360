@@ -7,10 +7,7 @@ import { createServerSupabase } from '@/lib/supabase-server';
  * GET /api/photos/diagnose
  *
  * Runs a step-by-step diagnostic of the photo upload pipeline and reports
- * timing + pass/fail for each phase. Requires authentication (admin only
- * in production — any authenticated user during debugging).
- *
- * Remove or restrict this endpoint once the issue is resolved.
+ * timing + pass/fail for each phase. Restricted to super_admin users.
  */
 export async function GET() {
   const results: Record<string, unknown> = {};
@@ -18,10 +15,6 @@ export async function GET() {
 
   // ── 1. Environment ──
   results.env = {
-    hasBucketName: Boolean(process.env.S3_BUCKET_NAME),
-    hasS3Region: Boolean(process.env.S3_REGION),
-    hasAwsRegion: Boolean(process.env.AWS_REGION),
-    resolvedRegion: process.env.S3_REGION ?? process.env.AWS_REGION ?? '(none)',
     isS3Configured: isS3Configured(),
   };
 
@@ -30,7 +23,7 @@ export async function GET() {
     return NextResponse.json(results);
   }
 
-  // ── 2. Auth ──
+  // ── 2. Auth + authorization ──
   try {
     const authStart = Date.now();
     const supabase = await createServerSupabase();
@@ -49,6 +42,17 @@ export async function GET() {
       results.conclusion = 'Not authenticated. Sign in and retry.';
       return NextResponse.json(results);
     }
+
+    // Require super_admin role
+    const { data: appUser } = await supabase
+      .from('users')
+      .select('role')
+      .eq('auth_uid', user.id)
+      .single();
+
+    if (!appUser || (appUser as Record<string, unknown>).role !== 'super_admin') {
+      return NextResponse.json({ error: 'Forbidden — super_admin access required' }, { status: 403 });
+    }
   } catch (err) {
     results.auth = { pass: false, error: err instanceof Error ? err.message : String(err) };
     results.conclusion = 'Auth check threw an exception.';
@@ -58,16 +62,13 @@ export async function GET() {
   const s3 = getS3Client()!;
   const bucket = getS3Bucket();
 
-  // ── 3. Credential resolution ──
+  // ── 3. Credential resolution (timing only — no metadata exposed) ──
   try {
     const credStart = Date.now();
-    const creds = await s3.config.credentials();
+    await s3.config.credentials();
     results.credentials = {
       pass: true,
       ms: Date.now() - credStart,
-      hasAccessKey: Boolean(creds.accessKeyId),
-      hasSessionToken: Boolean(creds.sessionToken),
-      keyPrefix: creds.accessKeyId?.slice(0, 4),
     };
   } catch (err) {
     results.credentials = {
@@ -88,7 +89,6 @@ export async function GET() {
     results.headBucket = { pass: true, ms: Date.now() - headStart };
   } catch (err) {
     const name = err instanceof Error ? err.name : 'Unknown';
-    const message = err instanceof Error ? err.message : String(err);
     const code = (err as Record<string, unknown>)?.$metadata
       ? ((err as Record<string, unknown>).$metadata as Record<string, unknown>)?.httpStatusCode
       : undefined;
@@ -96,7 +96,6 @@ export async function GET() {
       pass: false,
       ms: Date.now() - overall,
       errorName: name,
-      errorMessage: message,
       httpStatus: code,
     };
     if (code === 403) {
@@ -104,7 +103,7 @@ export async function GET() {
     } else if (code === 404) {
       results.conclusion = 'Bucket does not exist. Verify the bucket name in environment configuration.';
     } else if (name === 'AbortError' || name === 'TimeoutError') {
-      results.conclusion = 'HeadBucket timed out. The compute environment may not have network access to the S3 endpoint. Check VPC/security group settings.';
+      results.conclusion = 'HeadBucket timed out. The compute environment may not have network access to the S3 endpoint.';
     } else {
       results.conclusion = `HeadBucket failed: ${name}`;
     }
@@ -127,7 +126,6 @@ export async function GET() {
     results.testWrite = { pass: true, ms: Date.now() - putStart };
   } catch (err) {
     const name = err instanceof Error ? err.name : 'Unknown';
-    const message = err instanceof Error ? err.message : String(err);
     const code = (err as Record<string, unknown>)?.$metadata
       ? ((err as Record<string, unknown>).$metadata as Record<string, unknown>)?.httpStatusCode
       : undefined;
@@ -135,7 +133,6 @@ export async function GET() {
       pass: false,
       ms: Date.now() - overall,
       errorName: name,
-      errorMessage: message,
       httpStatus: code,
     };
     if (code === 403) {

@@ -8,7 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') ?? '/dashboard';
+  const rawNext = searchParams.get('next') ?? '/dashboard';
+  // Prevent open redirect — only allow relative paths (no protocol-relative //evil.com)
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');

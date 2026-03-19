@@ -67,12 +67,14 @@ export async function GET() {
       return NextResponse.json({ error: 'No user profile found' }, { status: 404 });
     }
 
-    // Load tenant
+    // Load tenant(s) — super admins see all, regular users see only their own
     const row = userRow as Record<string, unknown>;
-    const { data: tenantRows, error: tenantError } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('is_active', true);
+    const isSuperAdmin = row.role === 'super_admin';
+    let tenantQuery = supabase.from('tenants').select('*').eq('is_active', true);
+    if (!isSuperAdmin) {
+      tenantQuery = tenantQuery.eq('id', row.tenant_id as string);
+    }
+    const { data: tenantRows, error: tenantError } = await tenantQuery;
 
     if (tenantError) { /* query error */ }
 

@@ -52,6 +52,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing tenantId, animalId, or contentType' }, { status: 400 });
   }
 
+  // Validate IDs to prevent path traversal in S3 keys
+  const SAFE_ID = /^[a-zA-Z0-9_-]+$/;
+  if (!SAFE_ID.test(tenantId) || !SAFE_ID.test(animalId)) {
+    return NextResponse.json({ error: 'Invalid tenantId or animalId format' }, { status: 400 });
+  }
+
   // Enforce tenant isolation: user can only upload to their own tenant
   const row = appUser as Record<string, unknown>;
   if (row.role !== 'super_admin' && row.tenant_id !== tenantId) {

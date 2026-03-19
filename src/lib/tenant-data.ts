@@ -372,7 +372,11 @@ export async function updateTenant(
   if (fields.zip !== undefined) row.zip = toNullable(fields.zip);
   if (fields.phone !== undefined) row.phone = toNullable(fields.phone);
   if (fields.email !== undefined) row.email = toNullable(fields.email);
-  if (fields.logoUrl !== undefined) row.logo_url = toNullable(fields.logoUrl);
+  if (fields.logoUrl !== undefined) {
+    const url = toNullable(fields.logoUrl);
+    // Only allow https:// URLs for logo to prevent XSS via javascript: or data: URIs
+    row.logo_url = url && /^https?:\/\//i.test(url) ? url : null;
+  }
   if (fields.website !== undefined) row.website = toNullable(fields.website);
   if (fields.ein !== undefined) row.ein = toNullable(fields.ein);
   const { error } = await sb.from('tenants').update(row as Record<string, unknown> as never).eq('id', tenantId);
