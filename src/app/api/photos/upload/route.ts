@@ -39,6 +39,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // ── Tenant isolation ──
+  const { data: appUser } = await supabase
+    .from('users')
+    .select('tenant_id, role')
+    .eq('auth_uid', user.id)
+    .single();
+
+  if (!appUser) {
+    return NextResponse.json({ error: 'User not found' }, { status: 403 });
+  }
+
   const s3 = getS3Client()!;
   const bucket = getS3Bucket();
 
@@ -50,6 +61,18 @@ export async function POST(request: NextRequest) {
 
   if (!file || !tenantId || !animalId) {
     return NextResponse.json({ error: 'Missing file, tenantId, or animalId' }, { status: 400 });
+  }
+
+  // Enforce tenant isolation: user can only upload to their own tenant
+  const userRow = appUser as Record<string, unknown>;
+  if (userRow.role !== 'super_admin' && userRow.tenant_id !== tenantId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // ── Validate IDs (prevent path traversal in S3 keys) ──
+  const SAFE_ID = /^[a-zA-Z0-9_-]+$/;
+  if (!SAFE_ID.test(tenantId) || !SAFE_ID.test(animalId)) {
+    return NextResponse.json({ error: 'Invalid tenantId or animalId format' }, { status: 400 });
   }
 
   // ── Validate ──
@@ -81,12 +104,7 @@ export async function POST(request: NextRequest) {
     const credStart = Date.now();
     const creds = await s3.config.credentials();
     credentialMs = Date.now() - credStart;
-    console.log('[photo-upload] credentials resolved', {
-      ms: credentialMs,
-      hasAccessKey: Boolean(creds.accessKeyId),
-      hasSession: Boolean(creds.sessionToken),
-      source: creds.accessKeyId?.startsWith('ASIA') ? 'sts/role' : 'static',
-    });
+    console.log('[photo-upload] credentials resolved', { ms: credentialMs });
   } catch (credErr) {
     const elapsed = Date.now() - uploadStart;
     const msg = credErr instanceof Error ? credErr.message : String(credErr);
@@ -127,10 +145,7 @@ export async function POST(request: NextRequest) {
 
     console.error('[photo-upload] PutObject failed', {
       errorName: name,
-      errorMessage: message,
       httpStatus: code,
-      bucket,
-      region: process.env.S3_REGION ?? process.env.AWS_REGION,
       credentialMs,
       totalMs: elapsed,
     });

@@ -6,7 +6,13 @@ frontend:
         - npm ci
     build:
       commands:
-        - env | grep -E '^(NEXT_PUBLIC_|S3_|AWS_)' >> .env.production
+        # Write only the specific env vars needed — never glob AWS_* which can
+        # capture secrets like AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY.
+        - |
+          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
+          echo "S3_BUCKET_NAME=$S3_BUCKET_NAME" >> .env.production
+          echo "S3_REGION=${S3_REGION:-$AWS_REGION}" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
