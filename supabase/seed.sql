@@ -1,7 +1,12 @@
 -- ============================================================
 -- Seed data — mirrors src/lib/mock-data.ts
 -- Run after applying migrations to populate dev data.
+-- Safe to re-run: truncates all tables first.
 -- ============================================================
+
+-- ── Clear existing data (CASCADE handles foreign keys) ──────
+TRUNCATE tenants CASCADE;
+TRUNCATE early_access_requests;
 
 -- ── Tenants ──────────────────────────────────────────────────
 
