@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
+import { TypeaheadInput } from '@/components/ui/TypeaheadInput';
 import { DataTable } from '@/components/ui/DataTable';
 import {
   useAdopters, useAdoptions, useTags, useAnimals, useAdoptionApplications,
@@ -65,7 +66,9 @@ export default function AdoptionsPage() {
 
   // New adoption form state
   const [adoptionAnimalId, setAdoptionAnimalId] = useState('');
+  const [adoptionAnimalName, setAdoptionAnimalName] = useState('');
   const [adoptionAdopterId, setAdoptionAdopterId] = useState('');
+  const [adoptionAdopterName, setAdoptionAdopterName] = useState('');
   const [adoptionDate, setAdoptionDate] = useState('');
   const [adoptionFee, setAdoptionFee] = useState('');
   const [checkoutDonation, setCheckoutDonation] = useState('');
@@ -74,7 +77,9 @@ export default function AdoptionsPage() {
 
   function resetAdoptionForm() {
     setAdoptionAnimalId('');
+    setAdoptionAnimalName('');
     setAdoptionAdopterId('');
+    setAdoptionAdopterName('');
     setAdoptionDate('');
     setAdoptionFee('');
     setCheckoutDonation('');
@@ -703,22 +708,26 @@ export default function AdoptionsPage() {
             <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{adoptionError}</div>
           )}
           <FormField label="Animal" required>
-            <Select required value={adoptionAnimalId} onChange={e => setAdoptionAnimalId(e.target.value)}>
-              <option value="">Select animal...</option>
-              {availableAnimals.map(a => (
-                <option key={a.id} value={a.id}>{a.animalId} - {a.name} ({a.breed})</option>
-              ))}
-            </Select>
+            <TypeaheadInput
+              options={availableAnimals.map(a => ({ id: a.id, label: `${a.name} (${a.breed})`, sublabel: a.animalId }))}
+              value={adoptionAnimalId}
+              displayValue={adoptionAnimalName}
+              onChange={(id, name) => { setAdoptionAnimalId(id); setAdoptionAnimalName(name); }}
+              placeholder="Search animals..."
+              required
+            />
           </FormField>
           <FormField label="Adopter" required>
-            <Select required value={adoptionAdopterId} onChange={e => setAdoptionAdopterId(e.target.value)}>
-              <option value="">Select adopter...</option>
-              {allAdopters.map(a => (
-                <option key={a.id} value={a.id}>
-                  {a.flagged ? '⚠ ' : ''}{a.firstName} {a.lastName}
-                </option>
-              ))}
-            </Select>
+            <TypeaheadInput
+              options={allAdopters.map(a => ({ id: a.id, label: `${a.flagged ? '\u26A0 ' : ''}${a.firstName} ${a.lastName}`, sublabel: a.email }))}
+              value={adoptionAdopterId}
+              displayValue={adoptionAdopterName}
+              onChange={(id, name) => { setAdoptionAdopterId(id); setAdoptionAdopterName(name); }}
+              onCreateNew={() => setShowAddAdopterModal(true)}
+              placeholder="Search adopters..."
+              createNewLabel="Create new adopter"
+              required
+            />
           </FormField>
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Adoption Date" required><Input type="date" required value={adoptionDate} onChange={e => setAdoptionDate(e.target.value)} /></FormField>

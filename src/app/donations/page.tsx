@@ -18,11 +18,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select, Textarea } from '@/components/ui/FormField';
+import { TypeaheadInput } from '@/components/ui/TypeaheadInput';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
-import { useDonations } from '@/hooks/useTenantData';
+import { useDonations, usePeople, useOrganizations } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
-import { createDonation } from '@/lib/tenant-data';
+import { createDonation, createPerson, createOrganization } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getDonationTypeColor } from '@/lib/utils';
 import type { Donation } from '@/lib/types';
 
@@ -39,8 +40,13 @@ export default function DonationsPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const allPeople = usePeople();
+  const allOrganizations = useOrganizations();
+
   // Form state
-  const [formDonor, setFormDonor] = useState('');
+  const [formDonorId, setFormDonorId] = useState('');
+  const [formDonorName, setFormDonorName] = useState('');
+  const [formDonorType, setFormDonorType] = useState<'person' | 'organization' | ''>('');
   const [formDate, setFormDate] = useState('');
   const [formCategory, setFormCategory] = useState('');
   const [formAmount, setFormAmount] = useState('');
@@ -50,9 +56,52 @@ export default function DonationsPage() {
   const [formDescription, setFormDescription] = useState('');
   const [formReceipt, setFormReceipt] = useState(false);
 
+  // Create new donor inline modal state
+  const [showCreateDonorModal, setShowCreateDonorModal] = useState(false);
+  const [newDonorFirstName, setNewDonorFirstName] = useState('');
+  const [newDonorLastName, setNewDonorLastName] = useState('');
+  const [newDonorEmail, setNewDonorEmail] = useState('');
+  const [newDonorPhone, setNewDonorPhone] = useState('');
+  const [newDonorSaving, setNewDonorSaving] = useState(false);
+  const [newDonorError, setNewDonorError] = useState<string | null>(null);
+
+  function resetNewDonorForm() {
+    setNewDonorFirstName(''); setNewDonorLastName('');
+    setNewDonorEmail(''); setNewDonorPhone('');
+    setNewDonorError(null);
+  }
+
+  async function handleCreateDonor(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setNewDonorSaving(true);
+    setNewDonorError(null);
+    try {
+      const person = await createPerson(currentTenant.id, {
+        firstName: newDonorFirstName,
+        lastName: newDonorLastName,
+        email: newDonorEmail,
+        phone: newDonorPhone,
+        roles: ['donor'],
+      });
+      const fullName = `${person.firstName} ${person.lastName}`;
+      setFormDonorId(`person:${person.id}`);
+      setFormDonorName(fullName);
+      setFormDonorType('person');
+      setShowCreateDonorModal(false);
+      resetNewDonorForm();
+    } catch (err) {
+      setNewDonorError(err instanceof Error ? err.message : 'Failed to create person');
+    } finally {
+      setNewDonorSaving(false);
+    }
+  }
+
   function resetForm() {
     setDonationType('monetary');
-    setFormDonor('');
+    setFormDonorId('');
+    setFormDonorName('');
+    setFormDonorType('');
     setFormDate('');
     setFormCategory('');
     setFormAmount('');
@@ -76,7 +125,7 @@ export default function DonationsPage() {
         description: formDescription,
         date: formDate,
         category: formCategory,
-        personName: formDonor || undefined,
+        personName: formDonorName || undefined,
         amount: donationType === 'monetary' ? parseFloat(formAmount) : undefined,
         hours: donationType === 'time' ? parseFloat(formHours) : undefined,
         itemDescription: donationType === 'in-kind' ? formItemDesc : undefined,
@@ -282,7 +331,23 @@ export default function DonationsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Donor" required>
-              <Input placeholder="Donor name..." value={formDonor} onChange={e => setFormDonor(e.target.value)} required />
+              <TypeaheadInput
+                options={[
+                  ...allPeople.map(p => ({ id: `person:${p.id}`, label: `${p.firstName} ${p.lastName}`, sublabel: p.email })),
+                  ...allOrganizations.map(o => ({ id: `org:${o.id}`, label: o.name, sublabel: o.type })),
+                ]}
+                value={formDonorId}
+                displayValue={formDonorName}
+                onChange={(id, name) => {
+                  setFormDonorId(id);
+                  setFormDonorName(name);
+                  setFormDonorType(id.startsWith('person:') ? 'person' : id.startsWith('org:') ? 'organization' : '');
+                }}
+                onCreateNew={() => setShowCreateDonorModal(true)}
+                placeholder="Search donors..."
+                createNewLabel="Create new person"
+                required
+              />
             </FormField>
             <FormField label="Date" required>
               <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} required />
@@ -337,6 +402,35 @@ export default function DonationsPage() {
             <Button variant="outline" type="button" onClick={() => { setShowAddModal(false); resetForm(); }}>Cancel</Button>
             <Button type="submit" disabled={saving}>
               {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Record Donation'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Create New Donor Modal */}
+      <Modal open={showCreateDonorModal} onClose={() => { setShowCreateDonorModal(false); resetNewDonorForm(); }} title="Add Person" size="md">
+        <form className="space-y-4" onSubmit={handleCreateDonor}>
+          {newDonorError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{newDonorError}</div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="First Name" required>
+              <Input placeholder="First name" required value={newDonorFirstName} onChange={e => setNewDonorFirstName(e.target.value)} />
+            </FormField>
+            <FormField label="Last Name" required>
+              <Input placeholder="Last name" required value={newDonorLastName} onChange={e => setNewDonorLastName(e.target.value)} />
+            </FormField>
+            <FormField label="Email" required>
+              <Input type="email" placeholder="email@example.com" required value={newDonorEmail} onChange={e => setNewDonorEmail(e.target.value)} />
+            </FormField>
+            <FormField label="Phone" required>
+              <Input placeholder="(555) 000-0000" required value={newDonorPhone} onChange={e => setNewDonorPhone(e.target.value)} />
+            </FormField>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="outline" type="button" onClick={() => { setShowCreateDonorModal(false); resetNewDonorForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={newDonorSaving}>
+              {newDonorSaving ? 'Saving...' : 'Add Person'}
             </Button>
           </div>
         </form>
