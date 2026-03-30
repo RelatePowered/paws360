@@ -20,11 +20,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { FormField, Input, Select } from '@/components/ui/FormField';
+import { TypeaheadInput } from '@/components/ui/TypeaheadInput';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatCard } from '@/components/ui/StatCard';
 import { useOrganizations, usePeople, useDonations } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
-import { createOrganization } from '@/lib/tenant-data';
+import { createOrganization, createPerson } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getRoleBadgeColor } from '@/lib/utils';
 import type { Organization } from '@/lib/types';
 
@@ -62,6 +63,7 @@ export default function OrganizationsPage() {
   const [orgName, setOrgName] = useState('');
   const [orgType, setOrgType] = useState('');
   const [orgEin, setOrgEin] = useState('');
+  const [orgContactPersonId, setOrgContactPersonId] = useState('');
   const [orgContactName, setOrgContactName] = useState('');
   const [orgContactEmail, setOrgContactEmail] = useState('');
   const [orgContactPhone, setOrgContactPhone] = useState('');
@@ -74,8 +76,50 @@ export default function OrganizationsPage() {
   const [orgSaving, setOrgSaving] = useState(false);
   const [orgError, setOrgError] = useState<string | null>(null);
 
+  // Create new contact person inline
+  const [showCreateContactModal, setShowCreateContactModal] = useState(false);
+  const [newContactFirstName, setNewContactFirstName] = useState('');
+  const [newContactLastName, setNewContactLastName] = useState('');
+  const [newContactEmail, setNewContactEmail] = useState('');
+  const [newContactPhone, setNewContactPhone] = useState('');
+  const [newContactSaving, setNewContactSaving] = useState(false);
+  const [newContactError, setNewContactError] = useState<string | null>(null);
+
+  function resetNewContactForm() {
+    setNewContactFirstName(''); setNewContactLastName('');
+    setNewContactEmail(''); setNewContactPhone('');
+    setNewContactError(null);
+  }
+
+  async function handleCreateContact(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setNewContactSaving(true);
+    setNewContactError(null);
+    try {
+      const person = await createPerson(currentTenant.id, {
+        firstName: newContactFirstName,
+        lastName: newContactLastName,
+        email: newContactEmail,
+        phone: newContactPhone,
+        roles: [],
+      });
+      const fullName = `${person.firstName} ${person.lastName}`;
+      setOrgContactPersonId(person.id);
+      setOrgContactName(fullName);
+      setOrgContactEmail(person.email);
+      setOrgContactPhone(person.phone);
+      setShowCreateContactModal(false);
+      resetNewContactForm();
+    } catch (err) {
+      setNewContactError(err instanceof Error ? err.message : 'Failed to create person');
+    } finally {
+      setNewContactSaving(false);
+    }
+  }
+
   function resetOrgForm() {
-    setOrgName(''); setOrgType(''); setOrgEin(''); setOrgContactName('');
+    setOrgName(''); setOrgType(''); setOrgEin(''); setOrgContactPersonId(''); setOrgContactName('');
     setOrgContactEmail(''); setOrgContactPhone(''); setOrgAddress('');
     setOrgCity(''); setOrgState(''); setOrgZip(''); setOrgRole('');
     setOrgMatching('no'); setOrgError(null);
@@ -293,7 +337,24 @@ export default function OrganizationsPage() {
               <Input placeholder="XX-XXXXXXX" value={orgEin} onChange={e => setOrgEin(e.target.value)} />
             </FormField>
             <FormField label="Primary Contact Name" required>
-              <Input placeholder="Contact name" required value={orgContactName} onChange={e => setOrgContactName(e.target.value)} />
+              <TypeaheadInput
+                options={allPeople.map(p => ({ id: p.id, label: `${p.firstName} ${p.lastName}`, sublabel: p.email }))}
+                value={orgContactPersonId}
+                displayValue={orgContactName}
+                onChange={(id, name) => {
+                  setOrgContactPersonId(id);
+                  setOrgContactName(name);
+                  const person = allPeople.find(p => p.id === id);
+                  if (person) {
+                    setOrgContactEmail(person.email);
+                    setOrgContactPhone(person.phone);
+                  }
+                }}
+                onCreateNew={() => setShowCreateContactModal(true)}
+                placeholder="Search people..."
+                createNewLabel="Create new person"
+                required
+              />
             </FormField>
             <FormField label="Contact Email" required>
               <Input type="email" placeholder="email@company.com" required value={orgContactEmail} onChange={e => setOrgContactEmail(e.target.value)} />
@@ -449,6 +510,35 @@ export default function OrganizationsPage() {
             </div>
           );
         })()}
+      </Modal>
+
+      {/* Create New Contact Person Modal */}
+      <Modal open={showCreateContactModal} onClose={() => { setShowCreateContactModal(false); resetNewContactForm(); }} title="Add Person" size="md">
+        <form className="space-y-4" onSubmit={handleCreateContact}>
+          {newContactError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{newContactError}</div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="First Name" required>
+              <Input placeholder="First name" required value={newContactFirstName} onChange={e => setNewContactFirstName(e.target.value)} />
+            </FormField>
+            <FormField label="Last Name" required>
+              <Input placeholder="Last name" required value={newContactLastName} onChange={e => setNewContactLastName(e.target.value)} />
+            </FormField>
+            <FormField label="Email" required>
+              <Input type="email" placeholder="email@example.com" required value={newContactEmail} onChange={e => setNewContactEmail(e.target.value)} />
+            </FormField>
+            <FormField label="Phone" required>
+              <Input placeholder="(555) 000-0000" required value={newContactPhone} onChange={e => setNewContactPhone(e.target.value)} />
+            </FormField>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button variant="outline" type="button" onClick={() => { setShowCreateContactModal(false); resetNewContactForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={newContactSaving}>
+              {newContactSaving ? 'Saving...' : 'Add Person'}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
