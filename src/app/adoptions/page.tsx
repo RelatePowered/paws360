@@ -30,7 +30,7 @@ import {
   useAdopters, useAdoptions, useTags, useAnimals, useAdoptionApplications,
 } from '@/hooks/useTenantData';
 import { useAuth } from '@/context/AuthContext';
-import { createAdoption } from '@/lib/tenant-data';
+import { createAdoption, createAdopter } from '@/lib/tenant-data';
 import { formatCurrency, formatDate, getSeverityColor } from '@/lib/utils';
 import type { Adopter, Adoption, AdoptionApplication } from '@/lib/types';
 
@@ -64,6 +64,63 @@ export default function AdoptionsPage() {
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [noteAdopter, setNoteAdopter] = useState<Adopter | null>(null);
 
+  // Local adopters created during this session
+  const [localAdopters, setLocalAdopters] = useState<Adopter[]>([]);
+  const combinedAdopters = [...localAdopters, ...allAdopters];
+
+  // New adopter form state
+  const [newAdopterFirst, setNewAdopterFirst] = useState('');
+  const [newAdopterLast, setNewAdopterLast] = useState('');
+  const [newAdopterEmail, setNewAdopterEmail] = useState('');
+  const [newAdopterPhone, setNewAdopterPhone] = useState('');
+  const [newAdopterAddress, setNewAdopterAddress] = useState('');
+  const [newAdopterCity, setNewAdopterCity] = useState('');
+  const [newAdopterState, setNewAdopterState] = useState('');
+  const [newAdopterZip, setNewAdopterZip] = useState('');
+  const [newAdopterSaving, setNewAdopterSaving] = useState(false);
+  const [newAdopterError, setNewAdopterError] = useState<string | null>(null);
+
+  function resetNewAdopterForm() {
+    setNewAdopterFirst('');
+    setNewAdopterLast('');
+    setNewAdopterEmail('');
+    setNewAdopterPhone('');
+    setNewAdopterAddress('');
+    setNewAdopterCity('');
+    setNewAdopterState('');
+    setNewAdopterZip('');
+    setNewAdopterError(null);
+  }
+
+  async function handleCreateAdopter(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentTenant) return;
+    setNewAdopterSaving(true);
+    setNewAdopterError(null);
+    try {
+      const adopter = await createAdopter(currentTenant.id, {
+        firstName: newAdopterFirst,
+        lastName: newAdopterLast,
+        email: newAdopterEmail,
+        phone: newAdopterPhone,
+        address: newAdopterAddress || undefined,
+        city: newAdopterCity || undefined,
+        state: newAdopterState || undefined,
+        zip: newAdopterZip || undefined,
+      });
+      setLocalAdopters(prev => [adopter, ...prev]);
+      // Auto-select the new adopter in the adoption form
+      setAdoptionAdopterId(adopter.id);
+      setAdoptionAdopterName(`${adopter.firstName} ${adopter.lastName}`);
+      resetNewAdopterForm();
+      setShowAddAdopterModal(false);
+    } catch (err) {
+      setNewAdopterError(err instanceof Error ? err.message : 'Failed to create adopter');
+    } finally {
+      setNewAdopterSaving(false);
+    }
+  }
+
   // New adoption form state
   const [adoptionAnimalId, setAdoptionAnimalId] = useState('');
   const [adoptionAnimalName, setAdoptionAnimalName] = useState('');
@@ -90,7 +147,7 @@ export default function AdoptionsPage() {
     e.preventDefault();
     if (!currentTenant) return;
     const animal = allAnimals.find(a => a.id === adoptionAnimalId);
-    const adopter = allAdopters.find(a => a.id === adoptionAdopterId);
+    const adopter = combinedAdopters.find(a => a.id === adoptionAdopterId);
     if (!animal || !adopter) return;
 
     setAdoptionSaving(true);
@@ -122,7 +179,7 @@ export default function AdoptionsPage() {
   const pendingApps = allApplications.filter(a => a.status === 'submitted' || a.status === 'under-review');
   const approvedApps = allApplications.filter(a => a.status === 'approved');
 
-  const filteredAdopters = allAdopters.filter(a =>
+  const filteredAdopters = combinedAdopters.filter(a =>
     `${a.firstName} ${a.lastName} ${a.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -368,12 +425,12 @@ export default function AdoptionsPage() {
       </div>
 
       {/* Alert banner for flagged adopters */}
-      {allAdopters.filter(a => a.flagged).length > 0 && (
+      {combinedAdopters.filter(a => a.flagged).length > 0 && (
         <div className="p-4 rounded-lg bg-danger/5 border border-danger/20 flex items-start gap-3">
           <Shield className="w-5 h-5 text-danger shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-danger">
-              {allAdopters.filter(a => a.flagged).length} Flagged Adopter(s)
+              {combinedAdopters.filter(a => a.flagged).length} Flagged Adopter(s)
             </p>
             <p className="text-xs text-muted mt-1">
               Review flagged adopters before approving new adoptions.
@@ -404,7 +461,7 @@ export default function AdoptionsPage() {
             tab === 'adopters' ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'
           }`}
         >
-          Adopters ({allAdopters.length})
+          Adopters ({combinedAdopters.length})
         </button>
         <button
           onClick={() => setTab('adoptions')}
@@ -672,19 +729,22 @@ export default function AdoptionsPage() {
       </Modal>
 
       {/* Add Adopter Modal */}
-      <Modal open={showAddAdopterModal} onClose={() => setShowAddAdopterModal(false)} title="New Adopter" size="lg">
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); setShowAddAdopterModal(false); }}>
+      <Modal open={showAddAdopterModal} onClose={() => { setShowAddAdopterModal(false); resetNewAdopterForm(); }} title="New Adopter" size="lg">
+        <form className="space-y-4" onSubmit={handleCreateAdopter}>
+          {newAdopterError && (
+            <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">{newAdopterError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="First Name" required><Input placeholder="First name" required /></FormField>
-            <FormField label="Last Name" required><Input placeholder="Last name" required /></FormField>
-            <FormField label="Email" required><Input type="email" placeholder="email@example.com" required /></FormField>
-            <FormField label="Phone" required><Input placeholder="(555) 000-0000" required /></FormField>
+            <FormField label="First Name" required><Input placeholder="First name" required value={newAdopterFirst} onChange={e => setNewAdopterFirst(e.target.value)} /></FormField>
+            <FormField label="Last Name" required><Input placeholder="Last name" required value={newAdopterLast} onChange={e => setNewAdopterLast(e.target.value)} /></FormField>
+            <FormField label="Email" required><Input type="email" placeholder="email@example.com" required value={newAdopterEmail} onChange={e => setNewAdopterEmail(e.target.value)} /></FormField>
+            <FormField label="Phone" required><Input placeholder="(555) 000-0000" required value={newAdopterPhone} onChange={e => setNewAdopterPhone(e.target.value)} /></FormField>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormField label="Address" className="sm:col-span-3"><Input placeholder="Street address" /></FormField>
-            <FormField label="City"><Input placeholder="City" /></FormField>
-            <FormField label="State"><Input placeholder="State" /></FormField>
-            <FormField label="ZIP"><Input placeholder="ZIP" /></FormField>
+            <FormField label="Address" className="sm:col-span-3"><Input placeholder="Street address" value={newAdopterAddress} onChange={e => setNewAdopterAddress(e.target.value)} /></FormField>
+            <FormField label="City"><Input placeholder="City" value={newAdopterCity} onChange={e => setNewAdopterCity(e.target.value)} /></FormField>
+            <FormField label="State"><Input placeholder="State" value={newAdopterState} onChange={e => setNewAdopterState(e.target.value)} /></FormField>
+            <FormField label="ZIP"><Input placeholder="ZIP" value={newAdopterZip} onChange={e => setNewAdopterZip(e.target.value)} /></FormField>
           </div>
           <FormField label="Initial Notes">
             <Select>
@@ -695,8 +755,8 @@ export default function AdoptionsPage() {
             </Select>
           </FormField>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button variant="outline" type="button" onClick={() => setShowAddAdopterModal(false)}>Cancel</Button>
-            <Button type="submit">Add Adopter</Button>
+            <Button variant="outline" type="button" onClick={() => { setShowAddAdopterModal(false); resetNewAdopterForm(); }}>Cancel</Button>
+            <Button type="submit" disabled={newAdopterSaving}>{newAdopterSaving ? 'Saving...' : 'Add Adopter'}</Button>
           </div>
         </form>
       </Modal>
@@ -719,7 +779,7 @@ export default function AdoptionsPage() {
           </FormField>
           <FormField label="Adopter" required>
             <TypeaheadInput
-              options={allAdopters.map(a => ({ id: a.id, label: `${a.flagged ? '\u26A0 ' : ''}${a.firstName} ${a.lastName}`, sublabel: a.email }))}
+              options={combinedAdopters.map(a => ({ id: a.id, label: `${a.flagged ? '\u26A0 ' : ''}${a.firstName} ${a.lastName}`, sublabel: a.email }))}
               value={adoptionAdopterId}
               displayValue={adoptionAdopterName}
               onChange={(id, name) => { setAdoptionAdopterId(id); setAdoptionAdopterName(name); }}

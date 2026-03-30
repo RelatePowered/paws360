@@ -498,6 +498,59 @@ export async function getAdopters(tenantId: string): Promise<Adopter[]> {
   });
 }
 
+export async function createAdopter(
+  tenantId: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  }
+): Promise<Adopter> {
+  const sb = getSupabase();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const row = {
+    id,
+    tenant_id: tenantId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    address: input.address ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    zip: input.zip ?? null,
+    flagged: false,
+    created_at: now,
+    updated_at: now,
+  };
+  const { error } = await sb.from('adopters').insert(row as never);
+  if (error) throw error;
+  return {
+    id,
+    tenantId,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    phone: input.phone,
+    address: input.address,
+    city: input.city,
+    state: input.state,
+    zip: input.zip,
+    structuredNotes: [],
+    adoptionHistory: [],
+    returnHistory: [],
+    flagged: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export async function getAdoptions(tenantId: string): Promise<Adoption[]> {
   const sb = getSupabase();
   const { data } = await sb.from('adoptions').select('*').eq('tenant_id', tenantId);
