@@ -59,12 +59,15 @@ export default function EarlyAccessPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-teal-600 rounded-xl flex items-center justify-center">
               <PawPrint className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-slate-900">ShelterHub</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-slate-900 leading-tight">Paws360</span>
+              <span className="text-[10px] text-slate-500 leading-tight">powered by Relate</span>
+            </div>
           </Link>
-          <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-indigo-600 transition-colors">
+          <Link href="/login" className="text-sm font-medium text-slate-700 hover:text-teal-600 transition-colors">
             Sign In
           </Link>
         </div>
@@ -72,7 +75,7 @@ export default function EarlyAccessPage() {
 
       <div className="pt-32 pb-20 px-6">
         <div className="max-w-lg mx-auto">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 mb-8 transition-colors">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
@@ -84,11 +87,11 @@ export default function EarlyAccessPage() {
               </div>
               <h1 className="text-3xl font-black text-slate-900 mb-3">You&apos;re on the list!</h1>
               <p className="text-slate-600 mb-8">
-                Thanks for your interest in ShelterHub. We&apos;ll be in touch soon with next steps.
+                Thanks for your interest in Paws360. We&apos;ll be in touch soon with next steps.
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors"
               >
                 Back to Home
               </Link>
@@ -97,7 +100,7 @@ export default function EarlyAccessPage() {
             <>
               <h1 className="text-3xl font-black text-slate-900 mb-2">Request Early Access</h1>
               <p className="text-slate-600 mb-8">
-                ShelterHub is currently onboarding early adopter partners. Tell us about your organization and we&apos;ll get you set up.
+                Paws360 is currently onboarding early adopter partners. Tell us about your organization and we&apos;ll get you set up.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -110,7 +113,7 @@ export default function EarlyAccessPage() {
                       required
                       value={form.firstName}
                       onChange={e => update('firstName', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -121,7 +124,7 @@ export default function EarlyAccessPage() {
                       required
                       value={form.lastName}
                       onChange={e => update('lastName', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -134,7 +137,7 @@ export default function EarlyAccessPage() {
                     required
                     value={form.email}
                     onChange={e => update('email', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
 
@@ -146,7 +149,7 @@ export default function EarlyAccessPage() {
                     required
                     value={form.companyName}
                     onChange={e => update('companyName', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   />
                 </div>
 
@@ -157,7 +160,7 @@ export default function EarlyAccessPage() {
                     required
                     value={form.role}
                     onChange={e => update('role', e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
                   >
                     <option value="">Select your role</option>
                     {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -172,7 +175,7 @@ export default function EarlyAccessPage() {
                       required
                       value={form.staffCount}
                       onChange={e => update('staffCount', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
                     >
                       <option value="">Select</option>
                       {STAFF_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -185,7 +188,7 @@ export default function EarlyAccessPage() {
                       required
                       value={form.animalsPerYear}
                       onChange={e => update('animalsPerYear', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
                     >
                       <option value="">Select</option>
                       {ANIMALS_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
@@ -200,7 +203,7 @@ export default function EarlyAccessPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/25 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-teal-600/25 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
