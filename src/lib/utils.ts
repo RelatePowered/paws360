@@ -10,8 +10,8 @@ export function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export function generateId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export function generateId(): string {
+  return crypto.randomUUID();
 }
 
 export function generateAnimalId(species: string, year: number, seq: number): string {
