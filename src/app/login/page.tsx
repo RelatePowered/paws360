@@ -66,8 +66,9 @@ export default function LoginPage() {
           <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
             <PawPrint className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">ShelterHub</h1>
-          <p className="text-sm text-muted mt-1">Sign in to your account</p>
+          <h1 className="text-2xl font-bold">Paws360</h1>
+          <p className="text-sm text-muted mt-1">powered by Relate</p>
+          <p className="text-xs text-muted mt-2">Sign in to your account</p>
         </div>
 
         {/* Form */}

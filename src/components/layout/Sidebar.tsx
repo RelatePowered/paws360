@@ -85,8 +85,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               <PawPrint className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-tight">ShelterHub</h1>
-              <p className="text-xs text-white/50">Management Platform</p>
+              <h1 className="text-lg font-bold leading-tight">Paws360</h1>
+              <p className="text-xs text-white/50">powered by Relate</p>
             </div>
           </Link>
           <button

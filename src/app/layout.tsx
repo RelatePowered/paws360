@@ -5,8 +5,8 @@ import AppShell from "@/components/layout/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ShelterHub - Humane Society Management",
-  description: "Track donors, volunteers, animals, adoptions, and donations for your humane society.",
+  title: "Paws360 - Humane Society Management | Powered by Relate",
+  description: "Track donors, volunteers, animals, adoptions, and donations for your humane society. Paws360 powered by Relate.",
 };
 
 export const viewport: Viewport = {
