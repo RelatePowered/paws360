@@ -22,10 +22,8 @@ import {
   Layers,
   ChevronDown,
   ClipboardList,
-  TrendingUp,
   Clock,
   Eye,
-  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -153,8 +151,8 @@ export default function MarketingPage() {
             <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">All in One Place</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Track every animal, service, and outcome without spreadsheets&mdash;and generate
-            grant and impact reports in minutes.
+            Track every animal, service, and outcome without spreadsheets&mdash;with
+            Asilomar and SAC reports built right in.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
@@ -273,9 +271,9 @@ export default function MarketingPage() {
               description="Quickly produce reports for grants, board meetings, and compliance&mdash;without manual spreadsheets. SAC-formatted, Asilomar-compliant, and export-ready."
             />
             <FeatureCard
-              icon={<Sparkles className="w-6 h-6 text-teal-600" />}
-              title="Built-in intelligence"
-              description="Summarize case histories, surface trends, and assist with reporting&mdash;without adding extra work. AI that helps you focus on what matters."
+              icon={<Share2 className="w-6 h-6 text-teal-600" />}
+              title="Promote adoptable animals instantly"
+              description="Generate platform-optimized social media posts for Facebook, Instagram, and X/Twitter directly from animal profiles&mdash;with one click, ready to copy and share."
             />
           </div>
         </div>
@@ -292,10 +290,10 @@ export default function MarketingPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <StatBlock value="50-70%" label="Reduction in reporting time" />
-            <StatBlock value="100%" label="Record accuracy across cases" />
+            <StatBlock value="1-Click" label="SAC & Asilomar reports" />
+            <StatBlock value="Full" label="Intake-to-outcome tracking" />
             <StatBlock value="Real-time" label="Adoption & outcome visibility" />
-            <StatBlock value="More" label="Time for animal care" />
+            <StatBlock value="Less" label="Time on data entry" />
           </div>
         </div>
       </section>
@@ -351,8 +349,8 @@ export default function MarketingPage() {
               <div className="w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-xl mx-auto mb-6">
                 3
               </div>
-              <h3 className="font-bold text-lg mb-3">Generate reports automatically</h3>
-              <p className="text-sm text-slate-600">Produce grant-ready reports and insights automatically from your existing data.</p>
+              <h3 className="font-bold text-lg mb-3">Run reports when you need them</h3>
+              <p className="text-sm text-slate-600">Generate Asilomar, SAC, donation, and volunteer reports directly from your data&mdash;with CSV export ready to go.</p>
             </div>
           </div>
           <p className="text-center text-lg font-semibold text-slate-600">
@@ -411,7 +409,7 @@ export default function MarketingPage() {
             <FeatureCard
               icon={<BarChart3 className="w-6 h-6 text-teal-600" />}
               title="Reports & Analytics"
-              description="Donation summaries, volunteer hours, animal census, adoption trends, people engagement analysis. Export to CSV, QuickBooks format, or PDF."
+              description="Donation summaries, volunteer hours, animal census, adoption trends, and people engagement analysis. Export to CSV for easy sharing and record-keeping."
             />
             <FeatureCard
               icon={<Lock className="w-6 h-6 text-teal-600" />}
@@ -455,13 +453,13 @@ export default function MarketingPage() {
             <FeatureCard
               icon={<Globe className="w-6 h-6 text-teal-600" />}
               title="Petfinder & Adopt-a-Pet Export"
-              description="One-click CSV export in Petfinder and Adopt-a-Pet formats. Auto-maps species, size, and gender codes. Plus a public API endpoint for embedding adoptable animals on your website."
+              description="One-click CSV export in Petfinder and Adopt-a-Pet formats. Auto-maps species, size, and gender codes so you can upload directly to each platform without manual formatting."
               tag="Differentiator"
             />
             <FeatureCard
               icon={<DollarSign className="w-6 h-6 text-teal-600" />}
               title="Point-of-Adoption Donations"
-              description="Capture donations at the moment of adoption with a checkout-style flow. Suggested amounts ($10, $25, $50, $100) with custom input. Modeled on ShelterLuv's proven 30% conversion rate."
+              description="Capture donations at the moment of adoption with a checkout-style flow. Suggested amounts ($10, $25, $50, $100) with custom input&mdash;making it easy for new adopters to give back."
               tag="Differentiator"
             />
             <FeatureCard
@@ -518,11 +516,10 @@ export default function MarketingPage() {
                 <ComparisonRow feature="Moves management (CRM)" us={true} them={false} />
                 <ComparisonRow feature="Petfinder / Adopt-a-Pet export" us={true} them={false} />
                 <ComparisonRow feature="Point-of-adoption donations" us={true} them={false} />
-                <ComparisonRow feature="Social media post generator" us={true} them={false} />
+                <ComparisonRow feature="AI social media post generator" us={true} them={false} />
                 <ComparisonRow feature="Adoption application pipeline" us={true} them={false} />
                 <ComparisonRow feature="Vaccination alert dashboard" us={true} them={false} />
                 <ComparisonRow feature="Multi-tenant architecture" us={true} them={false} />
-                <ComparisonRow feature="Built-in AI intelligence" us={true} them={false} />
                 <ComparisonRow feature="Modern responsive UI" us={true} them={false} />
               </tbody>
             </table>
@@ -612,7 +609,7 @@ export default function MarketingPage() {
           <div>
             <FaqItem
               question="Can I import data from my current system?"
-              answer="Yes. Paws360 supports CSV import for animals, people, and donations. Our onboarding team will help map your existing data to Paws360's format, whether you're coming from ShelterLuv, PetPoint, Chameleon, spreadsheets, or any other system."
+              answer="We're building CSV import support and our onboarding team will work with you to migrate your existing data into Paws360, whether you're coming from ShelterLuv, PetPoint, Chameleon, spreadsheets, or any other system."
             />
             <FaqItem
               question="How does the Petfinder / Adopt-a-Pet integration work?"
@@ -623,8 +620,8 @@ export default function MarketingPage() {
               answer="The Live Release Rate (LRR) is the Asilomar Accords standard for measuring what percentage of shelter animals leave alive. The no-kill benchmark is 90%. Paws360 automatically calculates this using the official formula (excluding owner-requested euthanasia of unhealthy/untreatable animals), so you always know where you stand."
             />
             <FaqItem
-              question="What infrastructure do I need to run ShelterHub?"
-              answer="Nothing — Paws360 is a fully hosted cloud platform. We handle the infrastructure, database, backups, and security. Just sign up and start using it. For organizations with specific hosting requirements, we also offer self-hosted deployment options on the Enterprise plan."
+              question="What infrastructure do I need to run Paws360?"
+              answer="Nothing — Paws360 is a fully hosted cloud platform. We handle the infrastructure, database, backups, and security. Just sign up and start using it."
             />
             <FaqItem
               question="How does multi-tenancy work?"
@@ -645,8 +642,8 @@ export default function MarketingPage() {
             Spend less time managing records&mdash;and more time caring for animals
           </h2>
           <p className="text-lg text-slate-600 mb-10">
-            Join shelters across the country using Paws360 to save more animals,
-            raise more funds, and run more efficiently.
+            Join our growing community of shelters using Paws360 to streamline operations,
+            track outcomes, and stay ready for funding opportunities.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
