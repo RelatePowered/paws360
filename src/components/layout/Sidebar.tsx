@@ -33,19 +33,52 @@ interface NavItem {
   gatedFeature?: GatedFeature;
 }
 
-const navigation: NavItem[] = [
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const topLevelNav: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
-  { name: 'People', href: '/people', icon: Users, module: 'people' },
-  { name: 'Animals', href: '/animals', icon: PawPrint, module: 'animals' },
-  { name: 'Kennel Map', href: '/kennels', icon: MapPin, module: 'animals', gatedFeature: 'kennel_map' },
-  { name: 'Foster', href: '/foster', icon: Home, module: 'animals', gatedFeature: 'foster_management' },
-  { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
-  { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
-  { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },
-  { name: 'Publish Animals', href: '/animals/export', icon: Globe, module: 'animals', gatedFeature: 'petfinder_export' },
-  { name: 'Social Media', href: '/social', icon: Share2, module: 'animals', gatedFeature: 'social_media_ai' },
-  { name: 'Reports', href: '/reports', icon: BarChart3, module: 'reports' },
-  { name: 'Admin', href: '/admin', icon: Settings, module: 'admin' },
+];
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Animals',
+    items: [
+      { name: 'Animals', href: '/animals', icon: PawPrint, module: 'animals' },
+      { name: 'Adoptions', href: '/adoptions', icon: Heart, module: 'adoptions' },
+      { name: 'Foster', href: '/foster', icon: Home, module: 'animals', gatedFeature: 'foster_management' },
+      { name: 'Publish Animals', href: '/animals/export', icon: Globe, module: 'animals', gatedFeature: 'petfinder_export' },
+      { name: 'Social Media', href: '/social', icon: Share2, module: 'animals', gatedFeature: 'social_media_ai' },
+    ],
+  },
+  {
+    label: 'Donors & Volunteers',
+    items: [
+      { name: 'People', href: '/people', icon: Users, module: 'people' },
+      { name: 'Donations', href: '/donations', icon: DollarSign, module: 'donations' },
+      { name: 'Organizations', href: '/organizations', icon: Building2, module: 'organizations' },
+    ],
+  },
+  {
+    label: 'Facility',
+    items: [
+      { name: 'Kennel Map', href: '/kennels', icon: MapPin, module: 'animals', gatedFeature: 'kennel_map' },
+    ],
+  },
+  {
+    label: 'Reporting',
+    items: [
+      { name: 'Reports', href: '/reports', icon: BarChart3, module: 'reports' },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
+      { name: 'Admin', href: '/admin', icon: Settings, module: 'admin' },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -59,7 +92,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const planInfo = getPlanInfo(planTier);
 
   // Only show nav items the user has at least 'view' permission for
-  const visibleNav = navigation.filter(item => canView(item.module));
+  const visibleTopLevel = topLevelNav.filter(item => canView(item.module));
+  const visibleGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => canView(item.module)),
+    }))
+    .filter(group => group.items.length > 0);
 
   return (
     <>
@@ -98,32 +137,65 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {visibleNav.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-            const isLocked = item.gatedFeature ? !hasFeature(item.gatedFeature) : false;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-white'
-                    : isLocked
-                    ? 'text-white/40 hover:bg-sidebar-hover hover:text-white/60'
-                    : 'text-white/70 hover:bg-sidebar-hover hover:text-white'
-                )}
-              >
-                <item.icon className="w-5 h-5 shrink-0" />
-                <span className="flex-1">{item.name}</span>
-                {isLocked && (
-                  <Lock className="w-3.5 h-3.5 text-white/30" />
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          {/* Top-level items */}
+          <div className="space-y-1">
+            {visibleTopLevel.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-white'
+                      : 'text-white/70 hover:bg-sidebar-hover hover:text-white'
+                  )}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  <span className="flex-1">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Grouped sections */}
+          {visibleGroups.map((group) => (
+            <div key={group.label} className="mt-5">
+              <h3 className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/40">
+                {group.label}
+              </h3>
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                  const isLocked = item.gatedFeature ? !hasFeature(item.gatedFeature) : false;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-primary text-white'
+                          : isLocked
+                          ? 'text-white/40 hover:bg-sidebar-hover hover:text-white/60'
+                          : 'text-white/70 hover:bg-sidebar-hover hover:text-white'
+                      )}
+                    >
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      <span className="flex-1">{item.name}</span>
+                      {isLocked && (
+                        <Lock className="w-3.5 h-3.5 text-white/30" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Plan indicator */}
